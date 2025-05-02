@@ -1,0 +1,6 @@
+# Input data
+core_worksheet:
+lcms_results:
+
+# SCALiR parameters
+model_fit: interval # options include: fixed, interval, and wide
