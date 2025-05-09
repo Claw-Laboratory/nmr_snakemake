@@ -9,31 +9,41 @@ rule all:
   input:
     cf_wizard.final_results
 
-rule create_scalir_input_files:
+rule create_scalir_peaklist_file:
   input:
     lcms_results = ,
-    core_worksheet = ,
-    script = 
-  params:
-    out_directory = cf_wizard.scalir_infiles_dir
+    script = "scripts/make_peakslist_file.R"
   output:
-    peakslist_file = ,
-    standard_conc_file_ =
+    peakslist_file =
   conda:
     <condayaml>
   shell:
     """
     Rscript {input.script} \
-      --lcms {input.lcms_results} \
-      --cws {input.core_worksheet} \
-      --outdir {params.out_directory}
+      --infile {input.lcms_results} \
+      --outfile {output.peakslist_file}}
+    """
+
+rule create_scalir_IS_concentration_file:
+  input:
+    standards_stock_file = ,
+    script = "scripts/make_IS_concentration_file.R"
+  output:
+    standard_conc_file =
+  conda:
+    <condayaml>
+  shell:
+    """
+    Rscript {input.script} \
+      --infile {input.standards_stock_file} \
+      --outfile {output.standard_conc_file} }
     """
 
 rule run_scalir:
   input:
-    peaklist_file = ,
-    standard_conc_file_ = ,
-    script = 
+    rules.create_scalir_peaklist_file.output,
+    rules.create_scalir_IS_concentration_file.output,
+    script = "scripts/scalir_cli.py"
   params:
     model_fit = cf_wizard.model_fit,
     out_directory = ,

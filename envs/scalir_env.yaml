@@ -1,0 +1,12 @@
+name: scalir-cli
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pandas=1.5.*
+  - numpy=1.23.*
+  - matplotlib=3.6.*
+  - seaborn=0.12.*
+  - openpyxl
+  - pip
