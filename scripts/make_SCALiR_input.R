@@ -46,31 +46,42 @@ filtered_data <- data %>%
 head(filtered_data)
 
 # === STEP 6: Compute ratio for each metabolite ===
-
-# Helper: Extract unique metabolite prefixes from 'Area' column names
+# Identify all area columns
 area_cols <- colnames(filtered_data)
-metabolite_prefixes <- str_match(area_cols, "^(.+?)\\s*\\(([-A-Za-z0-9]+)\\).*Results Area")[, 2:3]
-metabolite_info <- tibble(full_name = area_cols, name = metabolite_prefixes[, 1], abbrev = metabolite_prefixes[, 2]) %>%
+# Extract metabolite names and abbreviations
+# Updated metabolite info: strip trailing `-d3` from abbreviations for pairing
+metabolite_matches <- str_match(area_cols, "^(.+?)\\s*\\(([-A-Za-z0-9]+)\\).*Results Area")
+
+metabolite_info <- tibble(
+  full_name = area_cols,
+  name      = metabolite_matches[, 2],
+  abbrev    = metabolite_matches[, 3]
+) %>%
   filter(!is.na(abbrev)) %>%
-  distinct(abbrev, .keep_all = TRUE)
+  mutate(
+    base_abbrev = str_replace(abbrev, "-d3$", ""),   # normalize e.g. CO-d3 -> CO
+    is_d3 = str_detect(abbrev, "-d3")
+  )
 
-# Match d3 (ISTD) and non-d3 pairs
-ratio_df <- purrr::map_dfc(metabolite_info$abbrev, function(abbr) {
-  # Find matching column names
-  non_d3_col <- grep(paste0("(?<!-d3)\\(", abbr, "\\).*Area"), area_cols, value = TRUE)
-  d3_col     <- grep(paste0("-d3 \\(", abbr, "-d3\\).*Area"), area_cols, value = TRUE)
+# Compute ratios
+ratio_df <- purrr::map_dfc(unique(metabolite_info$base_abbrev), function(base) {
+  rows <- metabolite_info %>% filter(base_abbrev == base)
 
-  if (length(non_d3_col) == 1 && length(d3_col) == 1) {
-    ratio <- filtered_data[[non_d3_col]] / filtered_data[[d3_col]]
-    tibble(!!abbr := ratio)
+  d3_row     <- rows %>% filter(is_d3)
+  non_d3_row <- rows %>% filter(!is_d3)
+
+  if (nrow(d3_row) == 1 && nrow(non_d3_row) == 1) {
+    num <- filtered_data[[non_d3_row$full_name]]
+    den <- filtered_data[[d3_row$full_name]]
+    tibble(!!base := num / den)
   } else {
-    NULL  # Skip if one or both columns are not found
+    message("Skipping: ", base, " (non_d3 = ", nrow(non_d3_row), ", d3 = ", nrow(d3_row), ")")
+    NULL
   }
 })
 
-# Final dataframe: ratios with rownames as Sample Name
-final_df <- ratio_df
-rownames(final_df) <- rownames(filtered_data)
+# Add sample names back as rownames
+rownames(ratio_df) <- rownames(filtered_data)
 
 # View result
-print(head(final_df))
+glimpse(final_df)
