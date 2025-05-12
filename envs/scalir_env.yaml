@@ -1,7 +1,7 @@
 name: scalir-cli
 channels:
   - conda-forge
-  - defaults
+  - nodefaults
 dependencies:
   - python=3.10
   - pandas=1.5.*
