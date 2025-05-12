@@ -25,7 +25,7 @@ standards_path <- args$infile
 outfile_path <- args$outfile
 
 # Read in file
-standards_df <- read_excel(standards_path)
+suppressMessages(standards_df <- read_excel(standards_path))
 
 # Add a column for base_name
 standards_df <- standards_df %>%
@@ -36,16 +36,11 @@ standards_df <- standards_df %>%
 # Make a dataframe of the internal standard stock concentration as a ratio of the working standard/heavy standard
 std_ratio_df <- purrr::map_dfc(unique(standards_df$base_name), function(base) {
   rows <- standards_df %>% filter(base_name == base)
-  print(rows)
   heavy_row     <- rows %>% filter(Type=="Heavy (IS)") %>% select(Compound, `Final Concentration (ng/uL)`)
   non_heavy_row <- rows %>% filter(Type=="Light (WS)") %>% select(Compound, `Final Concentration (ng/uL)`)
-  print (heavy_row)
-  print(non_heavy_row)
   if (nrow(heavy_row) == 1 && nrow(non_heavy_row) == 1) {
     num <- non_heavy_row$`Final Concentration (ng/uL)`
-    print(num)
     den <- heavy_row$`Final Concentration (ng/uL)`
-    print(den)
     tibble(!!base := num / den)
   } else {
     NULL
@@ -76,6 +71,6 @@ std_ratio_df <- std_ratio_df %>%
          internal_standard_injection_concentration) %>%
   rownames_to_column(var="peak_label")
 
-std_ratio_df <- std_ratio_df %>% arrange(desc(peak_label))
+std_ratio_df <- std_ratio_df %>% arrange(peak_label)
 
 fwrite(std_ratio_df, file = outfile_path)

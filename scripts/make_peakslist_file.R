@@ -26,7 +26,7 @@ raw_results <- args$infile
 outfile_path <- args$outfile
 
 # Read and transpose the header rows
-header_rows <- read_excel(raw_results, range = "A1:CX2", col_names = FALSE)
+suppressMessages(header_rows <- read_excel(raw_results, range = "A1:CX2", col_names = FALSE))
 header_t <- t(as.matrix(header_rows))
 header_df <- as.data.frame(header_t, stringsAsFactors = FALSE)
 colnames(header_df) <- c("group", "label")
@@ -41,7 +41,7 @@ header_df <- header_df %>%
 header_df <- header_df[-c(1, 2), ]
 
 # Read in data without the headers
-data <- read_excel(raw_results, skip = 2, col_names = FALSE)
+suppressMessages(data <- read_excel(raw_results, skip = 2, col_names = FALSE))
 
 # Align and apply headers
 header_df <- header_df[seq_len(ncol(data)), ]
@@ -56,7 +56,7 @@ filtered_data <- data %>%
   ) %>%
   filter(`Sample Type` %in% c("Cal", "Sample")) %>% # select only the standards and samples
   select(-`Sample Type`) %>%
-  mutate(across(`Sample Name`, str_replace, "(^std[^_]*)(.+)", "\\1")) %>% # Remove anything after the first '_' in the standards names
+  mutate(across(`Sample Name`, ~ str_replace(.x,"(^std[^_]*)(.+)", "\\1"))) %>% # Remove anything after the first '_' in the standards names
   column_to_rownames(var="Sample Name")
 
 # Compute the peak area ratio for each metabolite ===
