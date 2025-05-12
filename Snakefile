@@ -1,63 +1,75 @@
 from snakemake.utils import min_version
 min_version("8.0")
 
+configfile: "config.yaml"
 from utils import ConfigWizard
-
 cf_wizard = ConfigWizard(config)
 
 rule all:
   input:
-    cf_wizard.final_results
+    expand(cf_wizard.scalir_concentration_file,
+      batch_name = cf_wizard.batch_name),
+    cf_wizard.run_yaml_file
 
 rule create_scalir_peaklist_file:
   input:
-    lcms_results = ,
+    lcms_results = cf_wizard.batch_file,
     script = "scripts/make_peakslist_file.R"
   output:
-    peakslist_file =
+    peaklist_file = cf_wizard.scalir_peaklist_file
   conda:
-    <condayaml>
+    "envs/r_env.yaml"
   shell:
     """
     Rscript {input.script} \
       --infile {input.lcms_results} \
-      --outfile {output.peakslist_file}}
+      --outfile {output.peaklist_file}
     """
 
 rule create_scalir_IS_concentration_file:
   input:
-    standards_stock_file = ,
+    standards_stock_file = cf_wizard.standards,
     script = "scripts/make_IS_concentration_file.R"
   output:
-    standard_conc_file =
+    standard_conc_file = cf_wizard.scalir_standards_file
   conda:
-    <condayaml>
+    "envs/r_env.yaml"
   shell:
     """
     Rscript {input.script} \
       --infile {input.standards_stock_file} \
-      --outfile {output.standard_conc_file} }
+      --outfile {output.standard_conc_file}
     """
 
 rule run_scalir:
   input:
-    rules.create_scalir_peaklist_file.output,
-    rules.create_scalir_IS_concentration_file.output,
+    scalir_peaklist_file = cf_wizard.scalir_peaklist_file,
+    scalir_standard_file = cf_wizard.scalir_standards_file,
     script = "scripts/scalir_cli.py"
   params:
-    model_fit = cf_wizard.model_fit,
-    out_directory = ,
-    plots_directory = 
+    model_fit = cf_wizard.fit,
+    out_prefix = lambda wc: str(cf_wizard.get_batch_results_prefix(wc.batch_name)),
+    plot_directory = lambda wc: str(cf_wizard.get_plot_dir(wc.batch_name))
   output:
-    sample_conc_file =
+    sample_conc_file = cf_wizard.scalir_concentration_file
   conda:
-    <condayaml>
+    "envs/scalir_env.yaml"
   shell:
     """
     python {input.script} \
-      --peaklist {input.peaklist_file} \
-      --standards {input.standard_conc_file} \
+      --peaklist {input.scalir_peaklist_file} \
+      --standards {input.scalir_standard_file} \
       --fit-mode {params.model_fit} \
-      --output-prefix {params.out_directory} \
-      --plot-dir {params.plots_directory}
-    
+      --output-prefix {params.out_prefix} \
+      --plot-dir {params.plot_directory}
+    """
+
+rule save_run_config_and_paths_df:
+    output:
+        saved_yaml=cf_wizard.run_yaml_file
+    conda:
+        "envs/python.yaml"
+    params:
+        run_config=config
+    script:
+        "scripts/save_yaml.py"
