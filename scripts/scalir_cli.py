@@ -20,11 +20,11 @@ def main():
     parser.add_argument('--standards', required=True, help='Path to standards concentration file (.csv or .xlsx)')
     parser.add_argument('--peaklist', required=True, help='Path to peaklist data file (.csv or .xlsx)')
     parser.add_argument('--program', choices=['Mint', 'Maven'], help='Program used to generate peaklist (required if not internal)')
-    parser.add_argument('--mint_table_type', choices=['full results', 'dense peak_max'], help='Mint table type')
-    parser.add_argument('--fit_mode', choices=['fixed', 'interval', 'wide'], default='wide', help='Fit mode for regression')
-    parser.add_argument('--fit_interval', nargs=2, type=float, metavar=('LOWER', 'UPPER'), default=[0.85, 1.15], help='Slope interval bounds for interval fitting')
-    parser.add_argument('--output_prefix', default='scalir_output', help='Prefix for output files')
-    parser.add_argument('--plot_dir', help='Directory to save log-log plots for each compound')
+    parser.add_argument('--mint-table_type', choices=['full results', 'dense peak_max'], help='Mint table type')
+    parser.add_argument('--fit-mode', choices=['fixed', 'interval', 'wide'], default='wide', help='Fit mode for regression')
+    parser.add_argument('--fit-interval', nargs=2, type=float, metavar=('LOWER', 'UPPER'), default=[0.85, 1.15], help='Slope interval bounds for interval fitting')
+    parser.add_argument('--output-prefix', default='scalir_output', help='Prefix for output files')
+    parser.add_argument('--plot-dir', help='Directory to save log-log plots for each compound')
     args = parser.parse_args()
 
     # Prepare log file
@@ -109,7 +109,7 @@ def main():
             X.loc[X.peak_label == metab, 'pred_conc'] *= factor
 
     param_out = f"{args.output_prefix}_parameters.csv"
-    conc_out = f"{args.output_prefix}_results.csv"
+    conc_out = f"{args.output_prefix}_concentrations.csv"
 
     linear_params = ces.params_.sort_values(by='peak_label').drop(['lin_range_min', 'lin_range_max'], axis=1)
     linear_params.rename(columns={'slope': 'log_scale_slope', 'intercept': 'log_scale_intercept'}, inplace=True)

@@ -59,5 +59,5 @@ rule run_scalir:
       --standards {input.standard_conc_file} \
       --fit-mode {params.model_fit} \
       --output-prefix {params.out_directory} \
-      --plots-dir {params.plots_directory}
+      --plot-dir {params.plots_directory}
     
