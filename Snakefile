@@ -13,7 +13,7 @@ rule all:
 
 rule create_scalir_peaklist_file:
   input:
-    lcms_results = cf_wizard.batch_file,
+    lcms_results = lambda wc: cf_wizard.get_batch_file(wc.batch_name),
     script = "scripts/make_peakslist_file.R"
   output:
     peaklist_file = cf_wizard.scalir_peaklist_file
@@ -64,15 +64,15 @@ rule run_scalir:
       --plot-dir {params.plot_directory}
     """
 
-rule create_batch_concentrations_map:
-  input:
-    paths=cf_wizard.get_all_concentrations
-  output:
-    cf_wizard.batch_file.concentrations_map
-  conda:
-    "envs/python.yaml"
-  script:
-    "scripts/make_batch_concentrations_map.py"
+# rule create_batch_concentrations_map:
+#   input:
+#     paths=cf_wizard.get_all_concentrations
+#   output:
+#     cf_wizard.batch_file.concentrations_map
+#   conda:
+#     "envs/python.yaml"
+#   script:
+#     "scripts/make_batch_concentrations_map.py"
 
 rule save_run_config_and_paths_df:
     output:

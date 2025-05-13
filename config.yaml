@@ -1,7 +1,8 @@
 # Input data
 standards_stock_file: "data/STOCKSOLUTION_CONCENTRATIONS_005_11302022.xlsx"
-lcms_results:
-  - "data/NicMetabolomics_Resultss_4.18.23.xlsx"
+lcms_results: ["data/NicMetabolomics_Resultss_4.18.23.xlsx",
+               "data/NIC_MET_QUANT_RESULTS_221213.xlsx",
+               "data/NIC_MET_QUANT_RESULTS_02.14.23.xlsx"]
 
 # SCALiR parameters
 model_fit: "interval" # options include: fixed, interval, and wide

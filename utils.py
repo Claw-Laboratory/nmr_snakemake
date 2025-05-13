@@ -8,12 +8,13 @@ class ConfigWizard(object):
         self.config = config
 
     @property
-    def batch_file(self):
-        return self.config.get("lcms_results", [])
+    def batch_files(self):
+        return self.config.get("lcms_results", 1)
 
     @property
     def batch_name(self):
-        return [os.path.splitext(os.path.basename(f))[0] for f in self.batch_file]
+        return [os.path.splitext(os.path.basename(f))[0] for f in self.batch_files]
+
 
     @property
     def standards(self):
@@ -50,6 +51,10 @@ class ConfigWizard(object):
     @property
     def run_yaml_file(self):
         return self.out_dir.joinpath("run_config.yaml")
+
+    def get_batch_file(self, batch_name):
+        for f in self.batch_files:
+            return f
 
     def get_batch_results_prefix(self, batch_name):
         return Path(expandvars(self.config["out_dir"])) / batch_name / batch_name
