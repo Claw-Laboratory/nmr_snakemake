@@ -64,16 +64,6 @@ rule run_scalir:
       --plot-dir {params.plot_directory}
     """
 
-# rule create_batch_concentrations_map:
-#   input:
-#     paths=cf_wizard.get_all_concentrations
-#   output:
-#     cf_wizard.batch_file.concentrations_map
-#   conda:
-#     "envs/python.yaml"
-#   script:
-#     "scripts/make_batch_concentrations_map.py"
-
 rule save_run_config_and_paths_df:
     output:
         saved_yaml=cf_wizard.run_yaml_file
