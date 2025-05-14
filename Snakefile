@@ -8,7 +8,19 @@ rule all:
   input:
     expand(cf_wizard.scalir_concentration_file,
       batch_name = cf_wizard.batch_name),
-    cf_wizard.run_yaml_file
+    cf_wizard.run_yaml_file,
+    qc_samples= expand(cf_wizard.qc_samples_file,
+      batch_name=cf_wizard.batch_name),
+    qc_stats= expand(cf_wizard.qc_stats_file,
+      batch_name=cf_wizard.batch_name),
+    var_plot= expand(cf_wizard.qc_var_plot,
+      batch_name=cf_wizard.batch_name),
+    acc_plot= expand(cf_wizard.qc_acc_plot,
+      batch_name=cf_wizard.batch_name),
+    conc_plot_1= expand(cf_wizard.qc_conc_plot_1,
+      batch_name=cf_wizard.batch_name),
+    conc_plot_2= expand(cf_wizard.qc_conc_plot_2,
+      batch_name=cf_wizard.batch_name)
 
 rule create_scalir_peaklist_file:
   input:
@@ -61,6 +73,31 @@ rule run_scalir:
       --fit-mode {params.model_fit} \
       --output-prefix {params.out_prefix} \
       --plot-dir {params.plot_directory}
+    """
+
+rule run_quality_assessment:
+  input:
+    qc_file = cf_wizard.qc_file,
+    batch_conc_file = cf_wizard.scalir_concentration_file
+  params:
+    batch_name = cf_wizard.get_batch_name,
+    qa_out_dir = cf_wizard.get_qc_out_dir
+  output:
+    qc_samples = cf_wizard.qc_samples_file,
+    qc_stats = cf_wizard.qc_stats_file,
+    var_plot = cf_wizard.qc_var_plot,
+    acc_plot = cf_wizard.qc_acc_plot,
+    conc_plot_1 = cf_wizard.qc_conc_plot_1,
+    conc_plot_2= cf_wizard.qc_conc_plot_2
+  conda:
+    "envs/r_env.yaml"
+  shell:
+    """
+    Rscript scripts/quality_assessment.R \
+      --qc-file {input.qc_file} \
+      --batch-file {input.batch_conc_file} \
+      --batch-name {params.batch_name} \
+      --out-dir {params.qa_out_dir}
     """
 
 rule save_run_config_and_paths_df:

@@ -26,6 +26,10 @@ class ConfigWizard(object):
         return self.config["model_fit"]
 
     @property
+    def qc_file(self):
+        return self.config["qc_file"]
+
+    @property
     def out_dir(self):
         return Path(self.config["out_dir"])
 
@@ -50,6 +54,30 @@ class ConfigWizard(object):
         return self.batch_results_path.joinpath("{batch_name}_concentrations.csv")
 
     @property
+    def qc_samples_file(self):
+        return self.batch_results_path.joinpath("quality_assessment/{batch_name}_qc_samples.csv")
+
+    @property
+    def qc_stats_file(self):
+        return self.batch_results_path.joinpath("quality_assessment/{batch_name}_qc_statistics.csv")
+
+    @property
+    def qc_var_plot(self):
+        return self.batch_results_path.joinpath("quality_assessment/{batch_name}_precision_plot.jpg")
+
+    @property
+    def qc_acc_plot(self):
+        return self.batch_results_path.joinpath("quality_assessment/{batch_name}_accuracy_plot.jpg")
+
+    @property
+    def qc_conc_plot_1(self):
+        return self.batch_results_path.joinpath("quality_assessment/{batch_name}_qc_plot_1.jpg")
+
+    @property
+    def qc_conc_plot_2(self):
+        return self.batch_results_path.joinpath("quality_assessment/{batch_name}_qc_plot_2.jpg")
+
+    @property
     def run_yaml_file(self):
         return self.out_dir.joinpath("run_config.yaml")
 
@@ -63,3 +91,11 @@ class ConfigWizard(object):
     def get_plot_dir(self, wildcards):
         batch_name = wildcards.batch_name
         return self.out_dir.joinpath(batch_name, "plots")
+
+    def get_qc_out_dir(self, wildcards):
+        batch_name = wildcards.batch_name
+        return self.out_dir.joinpath(batch_name, "quality_assessment")
+
+    def get_batch_name(self, wildcards):
+        batch_name = wildcards.batch_name
+        return batch_name
