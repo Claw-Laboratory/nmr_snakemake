@@ -13,3 +13,4 @@ dependencies:
   - r-data.table
   - r-r.utils
   - r-argparse
+  - r-ggplot2
