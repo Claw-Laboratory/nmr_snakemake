@@ -20,7 +20,8 @@ rule all:
     conc_plot_1= expand(cf_wizard.qc_conc_plot_1,
       batch_name=cf_wizard.batch_name),
     conc_plot_2= expand(cf_wizard.qc_conc_plot_2,
-      batch_name=cf_wizard.batch_name)
+      batch_name=cf_wizard.batch_name),
+    combined_results = cf_wizard.combined_results_file
 
 rule create_scalir_peaklist_file:
   input:
@@ -88,7 +89,7 @@ rule run_quality_assessment:
     var_plot = cf_wizard.qc_var_plot,
     acc_plot = cf_wizard.qc_acc_plot,
     conc_plot_1 = cf_wizard.qc_conc_plot_1,
-    conc_plot_2= cf_wizard.qc_conc_plot_2
+    conc_plot_2 = cf_wizard.qc_conc_plot_2
   conda:
     "envs/r_env.yaml"
   shell:
@@ -100,12 +101,22 @@ rule run_quality_assessment:
       --out-dir {params.qa_out_dir}
     """
 
+rule combine_results:
+  input:
+    paths = cf_wizard.conc_file_paths
+  output:
+    combined_results = cf_wizard.combined_results_file
+  conda:
+    "envs/python.yaml"
+  script:
+    "scripts/combine_results.py"
+
 rule save_run_config_and_paths_df:
     output:
-        saved_yaml=cf_wizard.run_yaml_file
+        saved_yaml = cf_wizard.run_yaml_file
     conda:
         "envs/python.yaml"
     params:
-        run_config=config
+        run_config = config
     script:
         "scripts/save_yaml.py"

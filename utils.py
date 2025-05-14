@@ -81,6 +81,15 @@ class ConfigWizard(object):
     def run_yaml_file(self):
         return self.out_dir.joinpath("run_config.yaml")
 
+    @property
+    def conc_file_paths(self):
+        list_of_files = [str(self.scalir_concentration_file).format(batch_name=batch_name) for batch_name in self.batch_name]
+        return list_of_files
+
+    @property
+    def combined_results_file(self):
+        return self.out_dir.joinpath("combined_results.csv")
+
     def get_batch_file_path(self, wildcards):
         return self.batch_name_dict[wildcards.batch_name]
 
