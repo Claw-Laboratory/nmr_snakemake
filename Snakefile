@@ -1,7 +1,6 @@
 from snakemake.utils import min_version
 min_version("9.3.3")
 
-configfile: "config.yaml"
 from utils import ConfigWizard
 cf_wizard = ConfigWizard(config)
 
