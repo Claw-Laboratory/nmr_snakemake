@@ -1,5 +1,5 @@
 from snakemake.utils import min_version
-min_version("8.0")
+min_version("9.3.3")
 
 configfile: "config.yaml"
 from utils import ConfigWizard
@@ -13,7 +13,7 @@ rule all:
 
 rule create_scalir_peaklist_file:
   input:
-    lcms_results = lambda wc: cf_wizard.get_batch_file(wc.batch_name),
+    lcms_results = cf_wizard.get_batch_file_path,
     script = "scripts/make_peakslist_file.R"
   output:
     peaklist_file = cf_wizard.scalir_peaklist_file
@@ -48,8 +48,8 @@ rule run_scalir:
     script = "scripts/scalir_cli.py"
   params:
     model_fit = cf_wizard.fit,
-    out_prefix = lambda wc: str(cf_wizard.get_batch_results_prefix(wc.batch_name)),
-    plot_directory = lambda wc: str(cf_wizard.get_plot_dir(wc.batch_name))
+    out_prefix = cf_wizard.get_batch_results_prefix,
+    plot_directory = cf_wizard.get_plot_dir
   output:
     sample_conc_file = cf_wizard.scalir_concentration_file
   conda:
