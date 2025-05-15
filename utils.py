@@ -87,8 +87,24 @@ class ConfigWizard(object):
         return list_of_files
 
     @property
-    def combined_results_file(self):
-        return self.out_dir.joinpath("combined_results.csv")
+    def all_results_file(self):
+        return self.out_dir.joinpath("all_results.csv")
+
+    @property
+    def all_samples_results_file(self):
+        return self.out_dir.joinpath("samples.csv")
+
+    @property
+    def valid_samples_results_file(self):
+        return self.out_dir.joinpath("valid_samples.csv")
+
+    @property
+    def failed_samples_results_file(self):
+        return self.out_dir.joinpath("failed_samples.csv")
+
+    @property
+    def control_samples_results_file(self):
+        return self.out_dir.joinpath("control_samples.csv")
 
     def get_batch_file_path(self, wildcards):
         return self.batch_name_dict[wildcards.batch_name]

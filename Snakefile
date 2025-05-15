@@ -21,7 +21,7 @@ rule all:
       batch_name=cf_wizard.batch_name),
     conc_plot_2= expand(cf_wizard.qc_conc_plot_2,
       batch_name=cf_wizard.batch_name),
-    combined_results = cf_wizard.combined_results_file
+    combined_results = cf_wizard.all_results_file
 
 rule create_scalir_peaklist_file:
   input:
@@ -105,7 +105,11 @@ rule combine_results:
   input:
     paths = cf_wizard.conc_file_paths
   output:
-    combined_results = cf_wizard.combined_results_file
+    all_results_file = cf_wizard.all_results_file,
+    all_samples_file = cf_wizard.all_samples_results_file,
+    valid_samples_file = cf_wizard.valid_samples_results_file,
+    failed_samples_file = cf_wizard.failed_samples_results_file,
+    control_samples_file = cf_wizard.control_samples_results_file
   conda:
     "envs/python.yaml"
   script:

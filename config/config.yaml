@@ -1,10 +1,22 @@
 # Input data
 standards_stock_file: "data/STOCKSOLUTION_CONCENTRATIONS_005_11302022.xlsx"
-lcms_results: ["data/NicMetabolomics_Resultss_4.18.23.xlsx",
-               "data/NIC_MET_QUANT_RESULTS_221213.xlsx",
-               "data/NIC_MET_QUANT_RESULTS_02.14.23.xlsx"]
+lcms_results: [
+  "data/Kaja_NIC_MET_QUANT_RESULTS_221201.xlsx",
+  "data/NIC_MET_QUANT_RESULTS_02.14.23.xlsx",
+  "data/NIC_MET_QUANT_RESULTS_02.28.23.xlsx",
+  "data/NIC_MET_QUANT_RESULTS_03.06.23.xlsx",
+  "data/NIC_MET_QUANT_RESULTS_221213.xlsx",
+  "data/NIC_MET_QUANT_RESULTS_230209_for_scalir.xlsx",
+  "data/NIC_MET_QUANT_RESULTS_230309_for_scalir.xlsx",
+  "data/NicMetabolomics_Results_3.14.23.xlsx",
+  "data/NicMetabolomics_Results_3.23.23.xlsx",
+  "data/NicMetabolomics_Resultss_3.17.23.xlsx",
+  "data/NicMetabolomics_Resultss_4.11.23.xlsx",
+  "data/NicMetabolomics_Resultss_4.18.23.xlsx"
+  ]
+
 qc_file: "data/QCSolutions_002_20220630.xlsx"
 
 # SCALiR parameters
-model_fit: "interval" # options include: fixed, interval, and wide
-out_dir: "results"
+model_fit: "wide" # options include: fixed, interval, and wide
+out_dir: "wide_fit_results"
