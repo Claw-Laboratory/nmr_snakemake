@@ -7,8 +7,20 @@ cf_wizard = ConfigWizard(config)
 rule all:
   input:
     cf_wizard.run_yaml_file,
-    cf_wizard.valid_samples_nmr_file
-
+    qc_samples= expand(cf_wizard.qc_samples_file,
+      batch_name=cf_wizard.batch_name),
+    qc_stats= expand(cf_wizard.qc_stats_file,
+      batch_name=cf_wizard.batch_name),
+    var_plot= expand(cf_wizard.qc_var_plot,
+      batch_name=cf_wizard.batch_name),
+    acc_plot= expand(cf_wizard.qc_acc_plot,
+      batch_name=cf_wizard.batch_name),
+    conc_plot_1= expand(cf_wizard.qc_conc_plot_1,
+      batch_name=cf_wizard.batch_name),
+    conc_plot_2= expand(cf_wizard.qc_conc_plot_2,
+      batch_name=cf_wizard.batch_name),
+    combined_results = cf_wizard.all_results_file,
+    nmr_results = cf_wizard.valid_samples_nmr_file
 
 rule create_scalir_peaklist_file:
   input:
