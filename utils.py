@@ -106,6 +106,10 @@ class ConfigWizard(object):
     def control_samples_results_file(self):
         return self.out_dir.joinpath("control_samples.csv")
 
+    @property
+    def valid_samples_nmr_file(self):
+        return self.out_dir.joinpath("valid_samples_nmr.csv")
+
     def get_batch_file_path(self, wildcards):
         return self.batch_name_dict[wildcards.batch_name]
 

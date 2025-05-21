@@ -6,22 +6,9 @@ cf_wizard = ConfigWizard(config)
 
 rule all:
   input:
-    expand(cf_wizard.scalir_concentration_file,
-      batch_name = cf_wizard.batch_name),
     cf_wizard.run_yaml_file,
-    qc_samples= expand(cf_wizard.qc_samples_file,
-      batch_name=cf_wizard.batch_name),
-    qc_stats= expand(cf_wizard.qc_stats_file,
-      batch_name=cf_wizard.batch_name),
-    var_plot= expand(cf_wizard.qc_var_plot,
-      batch_name=cf_wizard.batch_name),
-    acc_plot= expand(cf_wizard.qc_acc_plot,
-      batch_name=cf_wizard.batch_name),
-    conc_plot_1= expand(cf_wizard.qc_conc_plot_1,
-      batch_name=cf_wizard.batch_name),
-    conc_plot_2= expand(cf_wizard.qc_conc_plot_2,
-      batch_name=cf_wizard.batch_name),
-    combined_results = cf_wizard.all_results_file
+    cf_wizard.valid_samples_nmr_file
+
 
 rule create_scalir_peaklist_file:
   input:
@@ -114,6 +101,16 @@ rule combine_results:
     "envs/python.yaml"
   script:
     "scripts/combine_results.py"
+
+rule calculate_nmr:
+  input:
+    valid_samples = cf_wizard.valid_samples_results_file
+  output:
+    valid_samples_nmr = cf_wizard.valid_samples_nmr_file
+  conda:
+    "envs/python.yaml"
+  script:
+    "scripts/calculate_nmr.py"
 
 rule save_run_config_and_paths_df:
     output:
