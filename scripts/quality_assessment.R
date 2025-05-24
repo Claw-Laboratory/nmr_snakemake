@@ -65,24 +65,26 @@ batch_df <- batch_df %>%
          )) %>%
   left_join(qc_df, by=c("peak_label"="Compound", "qc_level")) %>%
   mutate(dif_from_nominal = abs(pred_conc - nominal_conc),
-         percent_dif = (dif_from_nominal/nominal_conc)*100)
+         percent_dif = (dif_from_nominal/nominal_conc)*100,
+         smape = dif_from_nominal/((abs(pred_conc)+abs(nominal_conc))/2)*100)
 
 # Precision & Accuracy estimates
 batch_stats <- batch_df %>%
   select(ms_file, peak_label, pred_conc, qc_level, dif_from_nominal,
-         percent_dif, nominal_conc) %>%
+         percent_dif, nominal_conc, smape) %>%
   group_by(peak_label, qc_level) %>%
   summarize(pred_conc_sd = sd(pred_conc),
             pred_conc_avg = mean(pred_conc),
             variance = pred_conc_sd/pred_conc_avg,
             percent_variance = round(variance*100, digits = 2),
             avg_dif = mean(dif_from_nominal),
-            avg_percent_dif = round(mean(percent_dif), digits = 2))
+            avg_percent_dif = round(mean(percent_dif), digits = 2),
+            avg_smape = round(mean(smape), digits = 2))
 
 # Make tables pretty for output
 pretty_batch_df <- batch_df %>%
   select(ms_file, peak_label, qc_level, value, in_range,
-         pred_conc, nominal_conc, dif_from_nominal, percent_dif) %>%
+         pred_conc, nominal_conc, dif_from_nominal, percent_dif, smape) %>%
   rename("Sample Name" = "ms_file",
          "Metabolite" = "peak_label",
          "Peak Ratio" = "value",
@@ -90,27 +92,30 @@ pretty_batch_df <- batch_df %>%
          "Valid" = "in_range",
          "QC Level" = "qc_level",
          "Nominal Concentration" = "nominal_conc",
-         "Difference from Nominal" = "dif_from_nominal",
-         "Percent Difference" = "percent_dif")
+         "Error" = "dif_from_nominal",
+         "Percent Error" = "percent_dif",
+         "SMAPE" = "smape")
 fwrite(pretty_batch_df, file = paste0(outfile_prefix, "_qc_samples.csv"))
 
 pretty_batch_stats <- batch_stats %>%
   select(peak_label, qc_level, pred_conc_avg, pred_conc_sd,
-         variance, percent_variance, avg_dif, avg_percent_dif) %>%
+         variance, percent_variance, avg_dif, avg_percent_dif, avg_smape) %>%
   rename("Metabolite" = "peak_label",
          "QC Level" = "qc_level",
          "Predicted Concentration Average" = "pred_conc_avg",
          "Predicted Concentration Standard Deviation" = "pred_conc_sd",
          "Variance" = "variance",
          "Percent Variance" = "percent_variance",
-         "Average Difference from Nominal" = "avg_dif",
-         "Average Percent Difference" = "avg_percent_dif")
+         "Average Error" = "avg_dif",
+         "Average Percent Error" = "avg_percent_dif",
+         "Average SMAPE" = "avg_smape")
+
 fwrite(pretty_batch_stats, file = paste0(outfile_prefix, "_qc_statistics.csv"))
 
 # Plot Precision/Variance estimate
 var_plot <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
-  ggplot(aes(x=((pred_conc)*(50/1000)), y=peak_label, fill=peak_label)) +
+  ggplot(aes(x=((pred_conc)/(50/1000)), y=peak_label, fill=peak_label)) +
     geom_boxplot(varwidth = T) +
     #geom_point(aes(x=(nominal_conc*(50/1000)), y=peak_label)) +
     scale_fill_brewer(palette = "Dark2") +
@@ -132,14 +137,14 @@ ggsave(paste0(outfile_prefix, "_precision_plot.jpg"),
 # Plot Accuracy estimate
 acc_plot <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
-  ggplot(aes(y=peak_label, x=percent_dif, fill=peak_label)) +
+  ggplot(aes(y=peak_label, x=smape, fill=peak_label)) +
     geom_boxplot() +
     scale_fill_brewer(palette = "Dark2") +
     facet_wrap(~qc_level, nrow=3, scales = "free") +
     theme_bw(base_size = 14) +
     labs(title = "Predicted Concentration Accuracy",
          y = "Metabolite",
-         x = "Percent Different from Nominal") +
+         x = "Symmetric Percent-Error") +
     theme(axis.title.x = element_text(margin = margin(b=15), vjust=-3),
           axis.title.y = element_text(margin = margin(l=15), vjust=6),
           legend.position = "none")
@@ -153,9 +158,9 @@ ggsave(paste0(outfile_prefix, "_accuracy_plot.jpg"),
 # Plot of predicted concentrations with nominal concentrations
 conc1 <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
-  ggplot(aes(x=((pred_conc)*(50/1000)), y=peak_label, fill=peak_label)) +
+  ggplot(aes(x=((pred_conc)/(50/1000)), y=peak_label, fill=peak_label)) +
     geom_boxplot(varwidth = T) +
-    geom_point(aes(x=(nominal_conc*(50/1000)), y=peak_label)) +
+    geom_point(aes(x=(nominal_conc/(50/1000)), y=peak_label)) +
     scale_fill_brewer(palette = "Dark2") +
     facet_wrap(~qc_level, ncol=1, scales="free", strip.position = "top") +
     theme_bw(base_size = 14) +
@@ -175,9 +180,9 @@ ggsave(paste0(outfile_prefix, "_qc_plot_1.jpg"),
 
 conc2 <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
-  ggplot(aes(x=((pred_conc)*(50/1000)), y=qc_level, fill=peak_label)) +
+  ggplot(aes(x=((pred_conc)/(50/1000)), y=qc_level, fill=peak_label)) +
     geom_boxplot(varwidth = T) +
-    geom_point(aes(x=(nominal_conc*(50/1000)), y=qc_level)) +
+    geom_point(aes(x=(nominal_conc/(50/1000)), y=qc_level)) +
     scale_fill_brewer(palette = "Dark2") +
     facet_wrap(~peak_label, nrow=3, scales="free",strip.position = "right") +
     theme_bw(base_size = 14) +

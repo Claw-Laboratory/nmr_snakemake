@@ -10,7 +10,7 @@ def main(list_of_batch_paths, all_results_path, all_samples_results_path,
     filtered_df['ms_file'] = filtered_df['ms_file'].replace({r'^(\d\d\d\d)BW.+|^(\d\d\d\d)BW' : r'\1\2'}, regex=True)
     filtered_df['ms_file'] = filtered_df['ms_file'].replace({r'^SHS-(.+)': r'\1'}, regex=True)
     filtered_df['ms_file'] = filtered_df['ms_file'].replace({r'(.+)_RR$': r'\1'}, regex=True)
-    filtered_df['conc_ng_mL'] = filtered_df['pred_conc']*(50/1000) #predicted concentration is in ng/50uL, we want to report ng/mL
+    filtered_df['conc_ng_mL'] = filtered_df['pred_conc']/(50/1000) #predicted concentration is in ng/50uL, we want to report ng/mL
     filtered_df['type'] = np.where(filtered_df['ms_file'].str.len() == 4, 'control', 'sample')
     all_grouped = (filtered_df
         .groupby(['ms_file', 'peak_label'], as_index=False)
