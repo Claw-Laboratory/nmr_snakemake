@@ -8,19 +8,27 @@ rule all:
   input:
     cf_wizard.run_yaml_file,
     qc_samples= expand(cf_wizard.qc_samples_file,
-      batch_name=cf_wizard.batch_name),
+      batch_name=cf_wizard.batch_name,
+      fit=cf_wizard.fit),
     qc_stats= expand(cf_wizard.qc_stats_file,
-      batch_name=cf_wizard.batch_name),
+      batch_name=cf_wizard.batch_name,
+      fit=cf_wizard.fit),
     var_plot= expand(cf_wizard.qc_var_plot,
-      batch_name=cf_wizard.batch_name),
+      batch_name=cf_wizard.batch_name,
+      fit=cf_wizard.fit),
     acc_plot= expand(cf_wizard.qc_acc_plot,
-      batch_name=cf_wizard.batch_name),
+      batch_name=cf_wizard.batch_name,
+      fit=cf_wizard.fit),
     conc_plot_1= expand(cf_wizard.qc_conc_plot_1,
-      batch_name=cf_wizard.batch_name),
+      batch_name=cf_wizard.batch_name,
+      fit=cf_wizard.fit),
     conc_plot_2= expand(cf_wizard.qc_conc_plot_2,
-      batch_name=cf_wizard.batch_name),
-    combined_results = cf_wizard.all_results_file,
-    nmr_results = cf_wizard.valid_samples_nmr_file
+      batch_name=cf_wizard.batch_name,
+      fit=cf_wizard.fit),
+    combined_results = expand(cf_wizard.all_results_file,
+      fit=cf_wizard.fit),
+    nmr_results = expand(cf_wizard.valid_samples_nmr_file,
+      fit=cf_wizard.fit)
 
 rule create_scalir_peaklist_file:
   input:
@@ -58,7 +66,7 @@ rule run_scalir:
     scalir_standard_file = cf_wizard.scalir_standards_file,
     script = "scripts/scalir_cli.py"
   params:
-    model_fit = cf_wizard.fit,
+    model_fit = cf_wizard.get_fit,
     out_prefix = cf_wizard.get_batch_results_prefix,
     plot_directory = cf_wizard.get_plot_dir
   output:
@@ -102,7 +110,7 @@ rule run_quality_assessment:
 
 rule combine_results:
   input:
-    paths = cf_wizard.conc_file_paths
+    paths = cf_wizard.get_conc_file_paths
   output:
     all_results_file = cf_wizard.all_results_file,
     all_samples_file = cf_wizard.all_samples_results_file,

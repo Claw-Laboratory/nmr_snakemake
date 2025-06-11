@@ -3,11 +3,11 @@ from pathlib import Path
 from os.path import expandvars
 
 class ConfigWizard(object):
-    __slots__ = ("config", "batch_name_dict")
+    __slots__ = ("config", "batch_name_dict", "model_fit")
     def __init__(self, config):
         self.config = config
         self.batch_name_dict =  {os.path.splitext(os.path.basename(f))[0]: f for f in config["lcms_results"]}
-
+        self.model_fit = config["model_fit"]
 
     @property
     def batch_files(self):
@@ -23,7 +23,7 @@ class ConfigWizard(object):
 
     @property
     def fit(self):
-        return self.config["model_fit"]
+        return self.model_fit
 
     @property
     def qc_file(self):
@@ -35,7 +35,8 @@ class ConfigWizard(object):
 
     @property
     def batch_results_path(self):
-        return self.out_dir.joinpath("{batch_name}")
+        return self.out_dir.joinpath("{fit}" ,"{batch_name}")
+
 
     @property
     def scalir_input_dir(self):
@@ -83,48 +84,61 @@ class ConfigWizard(object):
 
     @property
     def conc_file_paths(self):
-        list_of_files = [str(self.scalir_concentration_file).format(batch_name=batch_name) for batch_name in self.batch_name]
+        list_of_files = [str(self.scalir_concentration_file).format(batch_name=batch_name, fit=fit)
+                         for batch_name in self.batch_name
+                         for fit in self.fit]
         return list_of_files
 
     @property
     def all_results_file(self):
-        return self.out_dir.joinpath("all_results.csv")
+        return self.out_dir.joinpath("{fit}", "all_results.csv")
 
     @property
     def all_samples_results_file(self):
-        return self.out_dir.joinpath("samples.csv")
+        return self.out_dir.joinpath("{fit}", "samples.csv")
 
     @property
     def valid_samples_results_file(self):
-        return self.out_dir.joinpath("valid_samples.csv")
+        return self.out_dir.joinpath("{fit}", "valid_samples.csv")
 
     @property
     def failed_samples_results_file(self):
-        return self.out_dir.joinpath("failed_samples.csv")
+        return self.out_dir.joinpath("{fit}", "failed_samples.csv")
 
     @property
     def control_samples_results_file(self):
-        return self.out_dir.joinpath("control_samples.csv")
+        return self.out_dir.joinpath("{fit}", "control_samples.csv")
 
     @property
     def valid_samples_nmr_file(self):
-        return self.out_dir.joinpath("valid_samples_nmr.csv")
+        return self.out_dir.joinpath("{fit}", "valid_samples_nmr.csv")
 
     def get_batch_file_path(self, wildcards):
         return self.batch_name_dict[wildcards.batch_name]
 
+    def get_fit(self, wildcards):
+        fit = wildcards.fit
+        return fit
+
     def get_batch_results_prefix(self, wildcards):
         batch_name = wildcards.batch_name
-        return self.out_dir.joinpath(batch_name, batch_name)
+        fit = wildcards.fit
+        return self.out_dir.joinpath(fit, batch_name, batch_name)
 
     def get_plot_dir(self, wildcards):
         batch_name = wildcards.batch_name
-        return self.out_dir.joinpath(batch_name, "plots")
+        fit = wildcards.fit
+        return self.out_dir.joinpath(fit, batch_name, "plots")
 
     def get_qc_out_dir(self, wildcards):
         batch_name = wildcards.batch_name
-        return self.out_dir.joinpath(batch_name, "quality_assessment")
+        fit = wildcards.fit
+        return self.out_dir.joinpath(fit, batch_name, "quality_assessment")
 
     def get_batch_name(self, wildcards):
         batch_name = wildcards.batch_name
         return batch_name
+
+    def get_conc_file_paths(self, wildcards):
+        paths = [str(self.scalir_concentration_file).format(batch_name = b, fit = wildcards.fit) for b in self.batch_name]
+        return paths

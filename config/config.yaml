@@ -18,5 +18,5 @@ lcms_results: [
 qc_file: "data/QCSolutions_002_20220630.xlsx"
 
 # SCALiR parameters
-model_fit: "wide" # options include: fixed, interval, and wide
-out_dir: "wide_fit_results"
+model_fit: ["fixed", "interval", "wide"] # options include: fixed, interval, and wide
+out_dir: "results"
