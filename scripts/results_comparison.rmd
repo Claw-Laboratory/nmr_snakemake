@@ -15,9 +15,9 @@ library(dplyr)
 library(tidyr)
 
 og_results <- fread("data/SHSph2_NMRwSurveyDF_clean20240729CRM.csv")
-scalir_fixed <- fread("fixed_fit_results/valid_samples_nmr.csv")
-scalir_interval <- fread("interval_fit_results/valid_samples_nmr.csv")
-scalir_wide <- fread("wide_fit_results/valid_samples_nmr.csv")
+scalir_fixed <- fread("results/fixed/valid_samples_nmr.csv")
+scalir_interval <- fread("results/interval/valid_samples_nmr.csv")
+scalir_wide <- fread("results/wide/valid_samples_nmr.csv")
 
 ```
 
