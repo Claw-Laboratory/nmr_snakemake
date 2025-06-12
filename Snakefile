@@ -28,7 +28,10 @@ rule all:
     combined_results = expand(cf_wizard.all_results_file,
       fit=cf_wizard.fit),
     nmr_results = expand(cf_wizard.valid_samples_nmr_file,
-      fit=cf_wizard.fit)
+      fit=cf_wizard.fit),
+    optimal_results = cf_wizard.optimal_conc_file,
+    optimal_nmr_results = cf_wizard.opt_valid_samples_nmr_file
+
 
 rule create_scalir_peaklist_file:
   input:
@@ -122,11 +125,38 @@ rule combine_results:
   script:
     "scripts/combine_results.py"
 
+rule combine_optimal_results:
+  input:
+    conc_files = cf_wizard.conc_file_paths,
+    qc_stats_files = cf_wizard.qc_stats_file_paths,
+    qc_conc_file = cf_wizard.qc_file
+  output:
+    optimal_conc_file = cf_wizard.optimal_conc_file,
+    all_results_file = cf_wizard.opt_all_results_file,
+    all_samples_file = cf_wizard.opt_all_samples_results_file,
+    valid_samples_file = cf_wizard.opt_valid_samples_results_file,
+    failed_samples_file = cf_wizard.opt_failed_samples_results_file,
+    control_samples_file = cf_wizard.opt_control_samples_results_file
+  conda:
+    "envs/python.yaml"
+  script:
+    "scripts/splice_optimal_results.py"
+
 rule calculate_nmr:
   input:
     valid_samples = cf_wizard.valid_samples_results_file
   output:
     valid_samples_nmr = cf_wizard.valid_samples_nmr_file
+  conda:
+    "envs/python.yaml"
+  script:
+    "scripts/calculate_nmr.py"
+
+rule calculate_nmr_optimal_results:
+  input:
+    valid_samples = cf_wizard.opt_valid_samples_results_file
+  output:
+    valid_samples_nmr = cf_wizard.opt_valid_samples_nmr_file
   conda:
     "envs/python.yaml"
   script:

@@ -9,3 +9,4 @@ dependencies:
   - numpy
   - htslib
   - pysam
+  - openpyxl
