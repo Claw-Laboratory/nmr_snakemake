@@ -66,7 +66,8 @@ std_ratio_df <- std_ratio_df %>%
     "unit" = "ng/uL",
     "internal_standard_injection_concentration" = 0.25
   ) %>%
-  select("std-0", "std-0.5", "std-1", "std-2.5", "std-5",
+  # removed std-2.5 due to consistent poor accuracy in measurement
+  select("std-0", "std-0.5", "std-1", "std-5",
          "std-10", "std-25", "std-50", "std-100", unit,
          internal_standard_injection_concentration) %>%
   rownames_to_column(var="peak_label")
