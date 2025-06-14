@@ -19,7 +19,7 @@ parser$add_argument("--qc-file",
                     help="Path to the QC sample stock solutions file.")
 parser$add_argument("--batch-file",
                     required=TRUE,
-                    help="Path to the metabolomics results excel file.")
+                    help="Path to the SCALiR predicted concentrations file.")
 parser$add_argument("--batch-name",
                     required=TRUE,
                     help="Name of batch")
@@ -70,10 +70,11 @@ batch_df <- batch_df %>%
 
 # Precision & Accuracy estimates
 batch_stats <- batch_df %>%
-  select(ms_file, peak_label, pred_conc, qc_level, dif_from_nominal,
+  select(ms_file, peak_label, pred_conc, qc_level, in_range, dif_from_nominal,
          percent_dif, nominal_conc, smape) %>%
   group_by(peak_label, qc_level) %>%
-  summarize(pred_conc_sd = sd(pred_conc),
+  summarize(in_range = mean(in_range),
+            pred_conc_sd = sd(pred_conc),
             pred_conc_avg = mean(pred_conc),
             variance = pred_conc_sd/pred_conc_avg,
             percent_variance = round(variance*100, digits = 2),
@@ -98,7 +99,7 @@ pretty_batch_df <- batch_df %>%
 fwrite(pretty_batch_df, file = paste0(outfile_prefix, "_qc_samples.csv"))
 
 pretty_batch_stats <- batch_stats %>%
-  select(peak_label, qc_level, pred_conc_avg, pred_conc_sd,
+  select(peak_label, qc_level, in_range, pred_conc_avg, pred_conc_sd,
          variance, percent_variance, avg_dif, avg_percent_dif, avg_smape) %>%
   rename("Metabolite" = "peak_label",
          "QC Level" = "qc_level",
