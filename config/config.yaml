@@ -1,7 +1,7 @@
 # Input data
 standards_stock_file: "data/STOCKSOLUTION_CONCENTRATIONS_005_11302022.xlsx"
 lcms_results: [
-  "data/Kaja_NIC_MET_QUANT_RESULTS_221201.xlsx",
+  #"data/Kaja_NIC_MET_QUANT_RESULTS_221201.xlsx",
   "data/NIC_MET_QUANT_RESULTS_02.14.23.xlsx",
   "data/NIC_MET_QUANT_RESULTS_02.28.23.xlsx",
   "data/NIC_MET_QUANT_RESULTS_03.06.23.xlsx",
