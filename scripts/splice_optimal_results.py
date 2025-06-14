@@ -25,12 +25,13 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
     qc_stats_df = []
     for fp in qc_stats_file_paths:
         _, fit, batch, _, fname = fp.split(os.sep)
-        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "Average SMAPE"])
+        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE"])
         df["fit"] = fit
         df["batch"] = batch
         qc_stats_df.append(df)
 
     best_fit_df = pd.concat(qc_stats_df, ignore_index=True)
+#    best_fit_df = best_fit_df[best_fit_df["in_range"] != 0]
     best_fit_df = best_fit_df.sort_values("Average SMAPE")
     best_fit_df = (
         best_fit_df
@@ -38,6 +39,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
         .reset_index(drop=True)
     )
     best_fit_df.rename(columns={"fit": "best_fit", "QC Level": "level", "Metabolite": "peak_label"}, inplace=True)
+#    best_fit_df.to_csv("results/best_fit_models.csv", index=False, header=True, sep='\t')
 
     # Merge concentration files
     conc_df = []
@@ -77,16 +79,26 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
     )
 
     # Join best-model table on metabolite x level x batch
-    conc_combined_df = conc_combined_df.merge(
+    best_fit_df = best_fit_df.drop(columns=["in_range"])
+    conc_filtered_df = conc_combined_df.merge(
         best_fit_df,
         on=["peak_label", "level", "batch"],
         how="left"
     )
 
     # Select final concentrations
-    conc_filtered_df = conc_combined_df[conc_combined_df["fit"] == conc_combined_df["best_fit"]].copy()
+    conc_filtered_df["score"] = (
+        conc_filtered_df["in_range"].astype(int) * 2
+      + (conc_filtered_df["fit"] == conc_filtered_df["best_fit"]).astype(int)
+    )
+    conc_filtered_df = (
+        conc_filtered_df
+          .sort_values("score", ascending=False)
+          .groupby(["ms_file","peak_label","batch"], as_index=False)
+          .first()
+    )
+    conc_filtered_df = conc_filtered_df.drop(columns=["b1", "b2", "best_fit", "score"])
     conc_filtered_df.to_csv(optimal_conc_file, index=False, header=True, sep='\t')
-
 
     ##### FILTER & FORMAT OUTPUT FILES #####
     filtered_df = conc_filtered_df.loc[~conc_filtered_df['ms_file'].str.contains('std')]
@@ -106,8 +118,11 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
         type=('type', 'first'),
-        n=('ms_file', 'size')
-    )
+        n=('ms_file', 'size'),
+        level=('level', lambda x: x.unique()),
+        fit=('fit', lambda x: x.unique()),
+        average_smape=('Average SMAPE', 'mean')
+        )
     )
     all_grouped.to_csv(all_results_path, index=False, header=True, sep='\t')
 
