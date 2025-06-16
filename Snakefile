@@ -113,11 +113,16 @@ rule run_quality_assessment:
 
 rule combine_results:
   input:
-    paths = cf_wizard.get_conc_file_paths
+    paths = cf_wizard.get_conc_file_paths,
+    qc_stats_files= cf_wizard.get_qc_file_paths,
+    qc_conc_file= cf_wizard.qc_file
+  params:
+    threshold = 25
   output:
     all_results_file = cf_wizard.all_results_file,
     all_samples_file = cf_wizard.all_samples_results_file,
     valid_samples_file = cf_wizard.valid_samples_results_file,
+    valid_samples_filtered_file = cf_wizard.valid_samples_filtered_results_file,
     failed_samples_file = cf_wizard.failed_samples_results_file,
     control_samples_file = cf_wizard.control_samples_results_file
   conda:
@@ -130,11 +135,14 @@ rule combine_optimal_results:
     conc_files = cf_wizard.conc_file_paths,
     qc_stats_files = cf_wizard.qc_stats_file_paths,
     qc_conc_file = cf_wizard.qc_file
+  params:
+    threshold = 25
   output:
     optimal_conc_file = cf_wizard.optimal_conc_file,
     all_results_file = cf_wizard.opt_all_results_file,
     all_samples_file = cf_wizard.opt_all_samples_results_file,
     valid_samples_file = cf_wizard.opt_valid_samples_results_file,
+    valid_samples_filtered_file= cf_wizard.opt_valid_samples_filtered_results_file,
     failed_samples_file = cf_wizard.opt_failed_samples_results_file,
     control_samples_file = cf_wizard.opt_control_samples_results_file
   conda:
@@ -144,7 +152,7 @@ rule combine_optimal_results:
 
 rule calculate_nmr:
   input:
-    valid_samples = cf_wizard.valid_samples_results_file
+    valid_samples = cf_wizard.valid_samples_filtered_results_file
   output:
     valid_samples_nmr = cf_wizard.valid_samples_nmr_file
   conda:
@@ -154,7 +162,7 @@ rule calculate_nmr:
 
 rule calculate_nmr_optimal_results:
   input:
-    valid_samples = cf_wizard.opt_valid_samples_results_file
+    valid_samples = cf_wizard.opt_valid_samples_filtered_results_file
   output:
     valid_samples_nmr = cf_wizard.opt_valid_samples_nmr_file
   conda:

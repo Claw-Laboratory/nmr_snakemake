@@ -108,6 +108,10 @@ class ConfigWizard(object):
         return self.out_dir.joinpath("{fit}", "valid_samples.csv")
 
     @property
+    def valid_samples_filtered_results_file(self):
+        return self.out_dir.joinpath("{fit}", "valid_filtered_samples.csv")
+
+    @property
     def failed_samples_results_file(self):
         return self.out_dir.joinpath("{fit}", "failed_samples.csv")
 
@@ -132,6 +136,10 @@ class ConfigWizard(object):
         return self.out_dir.joinpath("valid_samples.csv")
 
     @property
+    def opt_valid_samples_filtered_results_file(self):
+        return self.out_dir.joinpath("valid_filtered_samples.csv")
+
+    @property
     def opt_failed_samples_results_file(self):
         return self.out_dir.joinpath("failed_samples.csv")
 
@@ -142,6 +150,7 @@ class ConfigWizard(object):
     @property
     def opt_valid_samples_nmr_file(self):
         return self.out_dir.joinpath("valid_samples_nmr.csv")
+
 
     @property
     def optimal_conc_file(self):
@@ -175,4 +184,8 @@ class ConfigWizard(object):
 
     def get_conc_file_paths(self, wildcards):
         paths = [str(self.scalir_concentration_file).format(batch_name = b, fit = wildcards.fit) for b in self.batch_name]
+        return paths
+
+    def get_qc_file_paths(self, wildcards):
+        paths = [str(self.qc_stats_file).format(batch_name = b, fit = wildcards.fit) for b in self.batch_name]
         return paths

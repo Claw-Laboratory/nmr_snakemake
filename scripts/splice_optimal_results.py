@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 
-def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
-         all_results_path, all_samples_results_path, valid_samples_results_path,
+def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_conc_file,
+         all_results_path, all_samples_results_path, valid_samples_results_path, valid_samples_filtered_results_path,
          failed_samples_results_path, control_samples_results_path
          ):
 
@@ -137,7 +137,10 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
         type=('type', 'first'),
-        n=('ms_file', 'size')
+        n=('ms_file', 'size'),
+        level=('level', lambda x: x.unique()),
+        fit=('fit', lambda x: x.unique()),
+        average_smape=('Average SMAPE', 'mean')
     )
     )
     samples_grouped.to_csv(all_samples_results_path, index=False, header=True, sep='\t')
@@ -166,7 +169,10 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
         type=('type', 'first'),
-        n=('ms_file', 'size')
+        n=('ms_file', 'size'),
+        level=('level', lambda x: x.unique()),
+        fit=('fit', lambda x: x.unique()),
+        average_smape=('Average SMAPE', 'mean')
     )
     )
     failed_samples_grouped.to_csv(failed_samples_results_path, index=False, header=True, sep='\t')
@@ -181,10 +187,17 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
         type=('type', 'first'),
-        n=('ms_file', 'size')
+        n=('ms_file', 'size'),
+        level=('level', lambda x: x.unique()),
+        fit=('fit', lambda x: x.unique()),
+        average_smape=('Average SMAPE', 'mean')
     )
     )
     in_range_samples_grouped.to_csv(valid_samples_results_path, index=False, header=True, sep='\t')
+
+    # Filter in-range samples to those with an average SMAPE below the cutoff threshold
+    in_range_filtered_samples_grouped = in_range_samples_grouped[average_smape <= threshold]
+    in_range_filtered_samples_grouped.to_csv(valid_samples_filtered_results_path, index=False, header=True, sep='\t')
 
     # Subset to df of controls only
     controls_only = filtered_df.loc[filtered_df['type'] == 'control'].copy()
@@ -202,7 +215,10 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, optimal_conc_file,
         in_range=('in_range', 'mean'),
         type=('type', 'first'),
         control_type=('control_type', 'first'),
-        n=('ms_file', 'size')
+        n=('ms_file', 'size'),
+        level=('level', lambda x: x.unique()),
+        fit=('fit', lambda x: x.unique()),
+        average_smape=('Average SMAPE', 'mean')
     )
     )
     controls_grouped.to_csv(control_samples_results_path, index=False, header=True, sep='\t')
@@ -211,10 +227,12 @@ if __name__ == '__main__':
     main(snakemake.input["conc_files"],
          snakemake.input["qc_conc_file"],
          snakemake.input["qc_stats_files"],
+         snakemake.params["threshold"],
          snakemake.output["optimal_conc_file"],
          snakemake.output["all_results_file"],
          snakemake.output["all_samples_file"],
          snakemake.output["valid_samples_file"],
+         snakemake.output["valid_samples_filtered_file"],
          snakemake.output["failed_samples_file"],
          snakemake.output["control_samples_file"]
          )
