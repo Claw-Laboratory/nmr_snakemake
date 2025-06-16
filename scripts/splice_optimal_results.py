@@ -191,12 +191,12 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         level=('level', lambda x: x.unique()),
         fit=('fit', lambda x: x.unique()),
         average_smape=('Average SMAPE', 'mean')
-    )
+        )
     )
     in_range_samples_grouped.to_csv(valid_samples_results_path, index=False, header=True, sep='\t')
 
     # Filter in-range samples to those with an average SMAPE below the cutoff threshold
-    in_range_filtered_samples_grouped = in_range_samples_grouped[average_smape <= threshold]
+    in_range_filtered_samples_grouped = in_range_samples_grouped.loc[in_range_samples_grouped['average_smape'] <= threshold].copy()
     in_range_filtered_samples_grouped.to_csv(valid_samples_filtered_results_path, index=False, header=True, sep='\t')
 
     # Subset to df of controls only

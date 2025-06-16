@@ -63,10 +63,10 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
         how="left"
     )
 
-    conc_combined_df = conc_combined_df.drop(columns=["b1", "b2", "best_fit"])
+    conc_combined_df = conc_combined_df.drop(columns=["b1", "b2"])
 
     ##### FILTER & FORMAT OUTPUT FILES #####
-    filtered_df = conc_combined_df.loc[~concat_df['ms_file'].str.contains('std')]
+    filtered_df = conc_combined_df.loc[~conc_combined_df['ms_file'].str.contains('std')]
     filtered_df = filtered_df.loc[~filtered_df['ms_file'].str.contains('QC')]
     filtered_df['ms_file'] = filtered_df['ms_file'].replace({r'^(\d\d\d\d)BW.+|^(\d\d\d\d)BW' : r'\1\2'}, regex=True)
     filtered_df['ms_file'] = filtered_df['ms_file'].replace({r'^SHS-(.+)': r'\1'}, regex=True)
@@ -155,7 +155,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
     in_range_samples_grouped.to_csv(valid_samples_results_path, index=False, header=True, sep='\t')
 
     # Filter in-range samples to those with an average SMAPE below the cutoff threshold
-    in_range_filtered_samples_grouped = in_range_samples_grouped[average_smape <= threshold]
+    in_range_filtered_samples_grouped = in_range_samples_grouped.loc[in_range_samples_grouped['average_smape'] <= threshold].copy()
     in_range_filtered_samples_grouped.to_csv(valid_samples_filtered_results_path, index=False, header=True, sep='\t')
 
     # Subset to df of controls only

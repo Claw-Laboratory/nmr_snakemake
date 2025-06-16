@@ -4,6 +4,11 @@ min_version("9.3.3")
 from utils import ConfigWizard
 cf_wizard = ConfigWizard(config)
 
+if len(cf_wizard.fit) > 1:
+  extra_outputs = [cf_wizard.opt_valid_samples_nmr_file]
+else:
+  extra_outputs = []
+
 rule all:
   input:
     cf_wizard.run_yaml_file,
@@ -28,9 +33,8 @@ rule all:
     combined_results = expand(cf_wizard.all_results_file,
       fit=cf_wizard.fit),
     nmr_results = expand(cf_wizard.valid_samples_nmr_file,
-      fit=cf_wizard.fit),
-    optimal_results = cf_wizard.optimal_conc_file,
-    optimal_nmr_results = cf_wizard.opt_valid_samples_nmr_file
+      fit=cf_wizard.fit)
+    + extra_outputs
 
 
 rule create_scalir_peaklist_file:
@@ -117,7 +121,7 @@ rule combine_results:
     qc_stats_files= cf_wizard.get_qc_file_paths,
     qc_conc_file= cf_wizard.qc_file
   params:
-    threshold = 25
+    threshold = cf_wizard.accuracy_threshold
   output:
     all_results_file = cf_wizard.all_results_file,
     all_samples_file = cf_wizard.all_samples_results_file,
@@ -136,9 +140,9 @@ rule combine_optimal_results:
     qc_stats_files = cf_wizard.qc_stats_file_paths,
     qc_conc_file = cf_wizard.qc_file
   params:
-    threshold = 25
+    threshold = cf_wizard.accuracy_threshold
   output:
-    optimal_conc_file = cf_wizard.optimal_conc_file,
+    optimal_conc_file = temp(cf_wizard.optimal_conc_file),
     all_results_file = cf_wizard.opt_all_results_file,
     all_samples_file = cf_wizard.opt_all_samples_results_file,
     valid_samples_file = cf_wizard.opt_valid_samples_results_file,

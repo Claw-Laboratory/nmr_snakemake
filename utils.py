@@ -30,6 +30,10 @@ class ConfigWizard(object):
         return self.config["qc_file"]
 
     @property
+    def accuracy_threshold(self):
+        return self.config["percent_error_threshold"]
+
+    @property
     def out_dir(self):
         return Path(self.config["out_dir"])
 
@@ -121,40 +125,40 @@ class ConfigWizard(object):
 
     @property
     def valid_samples_nmr_file(self):
-        return self.out_dir.joinpath("{fit}", "valid_samples_nmr.csv")
+        return self.out_dir.joinpath("{fit}", "valid_filtered_samples_nmr.csv")
 
     @property
     def opt_all_results_file(self):
-        return self.out_dir.joinpath("all_results.csv")
+        return self.out_dir.joinpath("combined", "all_results.csv")
 
     @property
     def opt_all_samples_results_file(self):
-        return self.out_dir.joinpath("samples.csv")
+        return self.out_dir.joinpath("combined", "samples.csv")
 
     @property
     def opt_valid_samples_results_file(self):
-        return self.out_dir.joinpath("valid_samples.csv")
+        return self.out_dir.joinpath("combined", "valid_samples.csv")
 
     @property
     def opt_valid_samples_filtered_results_file(self):
-        return self.out_dir.joinpath("valid_filtered_samples.csv")
+        return self.out_dir.joinpath("combined", "valid_filtered_samples.csv")
 
     @property
     def opt_failed_samples_results_file(self):
-        return self.out_dir.joinpath("failed_samples.csv")
+        return self.out_dir.joinpath("combined", "failed_samples.csv")
 
     @property
     def opt_control_samples_results_file(self):
-        return self.out_dir.joinpath("control_samples.csv")
+        return self.out_dir.joinpath("combined", "control_samples.csv")
 
     @property
     def opt_valid_samples_nmr_file(self):
-        return self.out_dir.joinpath("valid_samples_nmr.csv")
+        return self.out_dir.joinpath("combined", "valid_filtered_samples_nmr.csv")
 
 
     @property
     def optimal_conc_file(self):
-        return self.out_dir.joinpath("optimal_concentrations.csv")
+        return self.out_dir.joinpath("combined", "optimal_concentrations.csv")
 
     def get_batch_file_path(self, wildcards):
         return self.batch_name_dict[wildcards.batch_name]
