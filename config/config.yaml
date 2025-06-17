@@ -1,5 +1,7 @@
-# Input data
+# INPUT DATA
+# File with the nominal concentrations of the light and heavy standards used in the LCMS experiment(s)
 standards_stock_file: "data/STOCKSOLUTION_CONCENTRATIONS_005_11302022.xlsx"
+# Results file in Excel format from the CU Anschutz Core Facility
 lcms_results: [
   #"data/Kaja_NIC_MET_QUANT_RESULTS_221201.xlsx",
   "data/NIC_MET_QUANT_RESULTS_02.14.23.xlsx",
@@ -14,12 +16,14 @@ lcms_results: [
   "data/NicMetabolomics_Resultss_4.11.23.xlsx",
   "data/NicMetabolomics_Resultss_4.18.23.xlsx"
   ]
-
+# File with the nominal concentrations of the quality control samples used in the LCMS experiment(s)
 qc_file: "data/QCSolutions_002_20220630.xlsx"
 
-# SCALiR parameters
+# SCALIR PARAMETERS
 model_fit: ["fixed", "interval"] # options include: fixed, interval, and wide
-out_dir: "results"
 
-# Final filtering parameters
-percent_error_threshold: 20
+# FINAL FILTERING PARAMETERS
+percent_error_threshold: 30
+
+# OUTPUT
+out_dir: "results"
