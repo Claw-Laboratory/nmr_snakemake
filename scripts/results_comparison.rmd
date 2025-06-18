@@ -15,10 +15,10 @@ library(dplyr)
 library(tidyr)
 
 og_results <- fread("data/SHSph2_NMRwSurveyDF_clean20240729CRM.csv")
-scalir_fixed <- fread("results/fixed/valid_samples_nmr.csv")
-scalir_interval <- fread("results/interval/valid_samples_nmr.csv")
-scalir_wide <- fread("results/wide/valid_samples_nmr.csv")
-
+scalir_fixed <- fread("results/fixed/valid_filtered_samples_nmr.csv")
+scalir_interval <- fread("results/interval/valid_filtered_samples_nmr.csv")
+scalir_wide <- fread("results/wide/valid_filtered_samples_nmr.csv")
+combined_results <- fread("results/combined/valid_filtered_samples_nmr.csv")
 ```
 
 Wrangle results data:
@@ -98,5 +98,11 @@ hist(interval_unique_df$logNMR)
 og_unique <- setdiff(og_results$idNo, c(scalir_interval$sample_id, scalir_wide$sample_id))
 og_unique_df <- og_results[og_results$idNo %in% og_unique,]
 hist(og_unique_df$logNMR)
+
+```
+
+Assess the correlation between the original, fixed, interval, and combined model fits estimates for cotinine and hydroxycotinine concentrations
+```{r}
+library(ggplot2)
 
 ```
