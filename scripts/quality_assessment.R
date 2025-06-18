@@ -76,11 +76,14 @@ batch_stats <- batch_df %>%
   summarize(in_range = mean(in_range),
             pred_conc_sd = sd(pred_conc),
             pred_conc_avg = mean(pred_conc),
+            lower_limit = pred_conc_avg - 2*pred_conc_sd,
+            upper_limit = pred_conc_avg + 2*pred_conc_sd,
             variance = pred_conc_sd/pred_conc_avg,
             percent_variance = round(variance*100, digits = 2),
             avg_dif = mean(dif_from_nominal),
             avg_percent_dif = round(mean(percent_dif), digits = 2),
-            avg_smape = round(mean(smape), digits = 2))
+            avg_smape = round(mean(smape), digits = 2),
+            accuracy_check = (lower_limit <= nominal_conc) & (nominal_conc <= upper_limit))
 
 # Make tables pretty for output
 pretty_batch_df <- batch_df %>%
@@ -100,7 +103,7 @@ fwrite(pretty_batch_df, file = paste0(outfile_prefix, "_qc_samples.csv"))
 
 pretty_batch_stats <- batch_stats %>%
   select(peak_label, qc_level, in_range, pred_conc_avg, pred_conc_sd,
-         variance, percent_variance, avg_dif, avg_percent_dif, avg_smape) %>%
+         variance, percent_variance, avg_dif, avg_percent_dif, avg_smape, accuracy_check) %>%
   rename("Metabolite" = "peak_label",
          "QC Level" = "qc_level",
          "Predicted Concentration Average" = "pred_conc_avg",
@@ -109,7 +112,8 @@ pretty_batch_stats <- batch_stats %>%
          "Percent Variance" = "percent_variance",
          "Average Error" = "avg_dif",
          "Average Percent Error" = "avg_percent_dif",
-         "Average SMAPE" = "avg_smape")
+         "Average SMAPE" = "avg_smape",
+         "Accuracy Check" = "accuracy_check")
 
 fwrite(pretty_batch_stats, file = paste0(outfile_prefix, "_qc_statistics.csv"))
 

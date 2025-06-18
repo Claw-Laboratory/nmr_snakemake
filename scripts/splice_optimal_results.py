@@ -25,7 +25,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
     qc_stats_df = []
     for fp in qc_stats_file_paths:
         _, fit, batch, _, fname = fp.split(os.sep)
-        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE"])
+        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE", "Accuracy Check"])
         df["fit"] = fit
         df["batch"] = batch
         qc_stats_df.append(df)
@@ -117,6 +117,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         pred_conc=('pred_conc', 'mean'),
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
+        accuracy_check=('Accuracy Check', 'mean'),
         type=('type', 'first'),
         n=('ms_file', 'size'),
         level=('level', lambda x: x.unique()),
@@ -136,6 +137,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         pred_conc=('pred_conc', 'mean'),
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
+        accuracy_check=('Accuracy Check', 'mean'),
         type=('type', 'first'),
         n=('ms_file', 'size'),
         level=('level', lambda x: x.unique()),
@@ -168,6 +170,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         pred_conc=('pred_conc', 'mean'),
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
+        accuracy_check=('Accuracy Check', 'mean'),
         type=('type', 'first'),
         n=('ms_file', 'size'),
         level=('level', lambda x: x.unique()),
@@ -186,6 +189,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         pred_conc=('pred_conc', 'mean'),
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
+        accuracy_check=('Accuracy Check', 'mean'),
         type=('type', 'first'),
         n=('ms_file', 'size'),
         level=('level', lambda x: x.unique()),
@@ -213,6 +217,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         pred_conc=('pred_conc', 'mean'),
         conc_ng_mL=('conc_ng_mL', 'mean'),
         in_range=('in_range', 'mean'),
+        accuracy_check=('Accuracy Check', 'mean'),
         type=('type', 'first'),
         control_type=('control_type', 'first'),
         n=('ms_file', 'size'),

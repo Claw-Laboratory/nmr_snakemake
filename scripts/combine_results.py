@@ -23,7 +23,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
     qc_stats_df = []
     for fp in qc_stats_file_paths:
         _, fit, batch, _, fname = fp.split(os.sep)
-        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE"])
+        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE", "Accuracy Check"])
         df["batch"] = batch
         qc_stats_df.append(df)
 
@@ -73,6 +73,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
     filtered_df['ms_file'] = filtered_df['ms_file'].replace({r'(.+)_RR$': r'\1'}, regex=True)
     filtered_df['conc_ng_mL'] = filtered_df['pred_conc']/(50/1000) #predicted concentration is in ng/50uL, we want to report ng/mL
     filtered_df['type'] = np.where(filtered_df['ms_file'].str.len() == 4, 'control', 'sample')
+
     all_grouped = (filtered_df
         .groupby(['ms_file', 'peak_label'], as_index=False)
         .agg(
@@ -81,6 +82,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
             pred_conc = ('pred_conc', 'mean'),
             conc_ng_mL = ('conc_ng_mL', 'mean'),
             in_range = ('in_range', 'mean'),
+            accuracy_check = ('Accuracy Check', 'mean'),
             type = ('type', 'first'),
             n = ('ms_file', 'size'),
             level = ('level', 'first'),
@@ -99,6 +101,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
             pred_conc = ('pred_conc', 'mean'),
             conc_ng_mL=('conc_ng_mL', 'mean'),
             in_range = ('in_range', 'mean'),
+            accuracy_check=('Accuracy Check', 'mean'),
             type = ('type', 'first'),
             n = ('ms_file', 'size'),
             level=('level', 'first'),
@@ -129,6 +132,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
             pred_conc = ('pred_conc', 'mean'),
             conc_ng_mL=('conc_ng_mL', 'mean'),
             in_range = ('in_range', 'mean'),
+            accuracy_check=('Accuracy Check', 'mean'),
             type = ('type', 'first'),
             n = ('ms_file', 'size'),
             level=('level', 'first'),
@@ -146,6 +150,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
             pred_conc = ('pred_conc', 'mean'),
             conc_ng_mL=('conc_ng_mL', 'mean'),
             in_range = ('in_range', 'mean'),
+            accuracy_check=('Accuracy Check', 'mean'),
             type = ('type', 'first'),
             n = ('ms_file', 'size'),
             level=('level', 'first'),
@@ -172,6 +177,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
             pred_conc = ('pred_conc', 'mean'),
             conc_ng_mL=('conc_ng_mL', 'mean'),
             in_range = ('in_range', 'mean'),
+            accuracy_check=('Accuracy Check', 'mean'),
             type = ('type', 'first'),
             control_type = ('control_type', 'first'),
             n = ('ms_file', 'size'),
