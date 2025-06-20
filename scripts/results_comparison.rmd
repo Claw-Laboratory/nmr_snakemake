@@ -17,8 +17,9 @@ library(tidyr)
 og_results <- fread("data/SHSph2_NMRwSurveyDF_clean20240729CRM.csv")
 scalir_fixed <- fread("results/fixed/valid_filtered_samples_nmr.csv")
 scalir_interval <- fread("results/interval/valid_filtered_samples_nmr.csv")
-scalir_wide <- fread("results/wide/valid_filtered_samples_nmr.csv")
+#scalir_wide <- fread("results/wide/valid_filtered_samples_nmr.csv")
 combined_results <- fread("results/combined/valid_filtered_samples_nmr.csv")
+
 ```
 
 Wrangle results data:
@@ -104,5 +105,327 @@ hist(og_unique_df$logNMR)
 Assess the correlation between the original, fixed, interval, and combined model fits estimates for cotinine and hydroxycotinine concentrations
 ```{r}
 library(ggplot2)
+library(GGally)
+library(tidyverse)
+library(patchwork)
+
+# join all the scalir datasets into one wide dataframe
+df_scalir <- scalir_fixed %>%
+        left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
+        left_join(combined_results, by = "sample_id") %>%
+        mutate(sample_id = as.character(sample_id)) %>%
+        rename("3-hydroxycotinine_combined" = "3-hydroxycotinine")
+
+# Pairwise Plot of SCALiR fixed, interval, and combined
+df_scalir %>%
+        select("3-hydroxycotinine_combined", "3-hydroxycotinine_fixed", "3-hydroxycotinine_interval") %>%
+        ggpairs(upper = list(continuous = wrap("cor", size = 4)),
+                lower = list(continuous = wrap("points", alpha = 0.6)),
+                diag = list(continuous = "densityDiag"))
+
+# Convert data to long-format
+hc_long <- df_scalir %>%
+            select("sample_id", "3-hydroxycotinine_combined", "3-hydroxycotinine_fixed", "3-hydroxycotinine_interval") %>%
+            pivot_longer(
+                    cols = starts_with("3-"),
+                    names_to = "fit",
+                    values_to = "pred_conc") %>%
+            mutate(fit = str_remove(fit, "3-hydroxycotinine_"))
+
+# Create pairwise combinations of fits
+fit_pairs <- combn(unique(hc_long$fit), 2, simplify=FALSE)
+
+# Create scatterplots for each pair
+plots <- map(fit_pairs, function(p) {
+  x_col <- paste0("3-hydroxycotinine_", p[1])
+  y_col <- paste0("3-hydroxycotinine_", p[2])
+
+  df_scalir %>%
+    ggplot(aes(x = .data[[x_col]], y = .data[[y_col]])) +
+    geom_point(alpha = 0.6) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      x = paste(p[1], "fit"),
+      y = paste(p[2], "fit"),
+      title = paste(p[1], "vs", p[2])
+    ) +
+    theme_minimal()
+})
+wrap_plots(plots)
+
+# Distribution plot
+ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Distribution of Predicted Concentrations by Model Fit",
+       x = "Predicted Concentration",
+       y = "Density") +
+  theme_minimal()
+
+```
+```{r}
+# join all the scalir datasets into one wide dataframe
+df_scalir <- scalir_fixed %>%
+        left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
+        left_join(combined_results, by = "sample_id") %>%
+        mutate(sample_id = as.character(sample_id)) %>%
+        rename("cotinine_combined" = "cotinine")
+
+# Pairwise Plot of SCALiR fixed, interval, and combined
+df_scalir %>%
+        select("cotinine_combined", "cotinine_fixed", "cotinine_interval") %>%
+        ggpairs(upper = list(continuous = wrap("cor", size = 4)),
+                lower = list(continuous = wrap("points", alpha = 0.6)),
+                diag = list(continuous = "densityDiag"))
+
+# Convert data to long-format
+hc_long <- df_scalir %>%
+            select("sample_id", "cotinine_combined", "cotinine_fixed", "cotinine_interval") %>%
+            pivot_longer(
+                    cols = starts_with("cotinine"),
+                    names_to = "fit",
+                    values_to = "pred_conc") %>%
+            mutate(fit = str_remove(fit, "cotinine_"))
+
+# Create pairwise combinations of fits
+fit_pairs <- combn(unique(hc_long$fit), 2, simplify=FALSE)
+
+# Create scatterplots for each pair
+plots <- map(fit_pairs, function(p) {
+  x_col <- paste0("cotinine_", p[1])
+  y_col <- paste0("cotinine_", p[2])
+
+  df_scalir %>%
+    ggplot(aes(x = .data[[x_col]], y = .data[[y_col]])) +
+    geom_point(alpha = 0.6) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      x = paste(p[1], "fit"),
+      y = paste(p[2], "fit"),
+      title = paste(p[1], "vs", p[2])
+    ) +
+    theme_minimal()
+})
+wrap_plots(plots)
+
+# Distribution plot
+ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Distribution of Predicted Concentrations by Model Fit",
+       x = "Predicted Concentration",
+       y = "Density") +
+  theme_minimal()
+
+```
+```{r}
+# join all the scalir datasets into one wide dataframe
+df_scalir <- scalir_fixed %>%
+        left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
+        left_join(combined_results, by = "sample_id") %>%
+        mutate(sample_id = as.character(sample_id)) %>%
+        rename("logNMR_combined" = "logNMR")
+
+# Pairwise Plot of SCALiR fixed, interval, and combined
+df_scalir %>%
+        select("logNMR_combined", "logNMR_fixed", "logNMR_interval") %>%
+        ggpairs(upper = list(continuous = wrap("cor", size = 4)),
+                lower = list(continuous = wrap("points", alpha = 0.6)),
+                diag = list(continuous = "densityDiag"))
+
+# Convert data to long-format
+hc_long <- df_scalir %>%
+            select("sample_id", "logNMR_combined", "logNMR_fixed", "logNMR_interval") %>%
+            pivot_longer(
+                    cols = starts_with("logNMR"),
+                    names_to = "fit",
+                    values_to = "pred_conc") %>%
+            mutate(fit = str_remove(fit, "logNMR_"))
+
+# Create pairwise combinations of fits
+fit_pairs <- combn(unique(hc_long$fit), 2, simplify=FALSE)
+
+# Create scatterplots for each pair
+plots <- map(fit_pairs, function(p) {
+  x_col <- paste0("logNMR_", p[1])
+  y_col <- paste0("logNMR_", p[2])
+
+  df_scalir %>%
+    ggplot(aes(x = .data[[x_col]], y = .data[[y_col]])) +
+    geom_point(alpha = 0.6) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      x = paste(p[1], "fit"),
+      y = paste(p[2], "fit"),
+      title = paste(p[1], "vs", p[2])
+    ) +
+    theme_minimal()
+})
+wrap_plots(plots)
+
+# Distribution plot
+ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Distribution of Predicted Concentrations by Model Fit",
+       x = "Predicted Concentration",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+# Subset the original data to just the columns we need for plotting
+og_subset <- og_results %>% select(idNo, COTconc, tHCconc, logNMR) %>%
+        rename("sample_id" = "idNo",
+               "cotinine" = "COTconc",
+               "3-hydroxycotinine" = "tHCconc")
+# join all the scalir datasets into one wide dataframe
+df_scalir <- scalir_fixed %>%
+        left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
+        left_join(combined_results, by = "sample_id") %>%
+        mutate(sample_id = as.character(sample_id))
+
+# join all the scalir datasets & the original dataset into one wide dataframe
+df_all <- df_scalir %>%
+        full_join(og_subset, by = "sample_id", suffix = c("_combined", "_og"))
+
+# Pairwise Plot of SCALiR fixed, interval, and combined
+df_all %>%
+        select("3-hydroxycotinine_combined", "3-hydroxycotinine_fixed", "3-hydroxycotinine_interval", "3-hydroxycotinine_og") %>%
+        ggpairs(upper = list(continuous = wrap("cor", size = 4)),
+                lower = list(continuous = wrap("points", alpha = 0.6)),
+                diag = list(continuous = "densityDiag"))
+
+# Convert data to long-format
+hc_long <- df_all %>%
+            select("sample_id", "3-hydroxycotinine_combined", "3-hydroxycotinine_fixed", "3-hydroxycotinine_interval", "3-hydroxycotinine_og") %>%
+            pivot_longer(
+                    cols = starts_with("3-"),
+                    names_to = "fit",
+                    values_to = "pred_conc") %>%
+            mutate(fit = str_remove(fit, "3-hydroxycotinine_"))
+
+# Create pairwise combinations of fits
+fit_pairs <- combn(unique(hc_long$fit), 2, simplify=FALSE)
+
+# Create scatterplots for each pair
+plots <- map(fit_pairs, function(p) {
+  x_col <- paste0("3-hydroxycotinine_", p[1])
+  y_col <- paste0("3-hydroxycotinine_", p[2])
+
+  df_all %>%
+    ggplot(aes(x = .data[[x_col]], y = .data[[y_col]])) +
+    geom_point(alpha = 0.6) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      x = paste(p[1], "fit"),
+      y = paste(p[2], "fit"),
+      title = paste(p[1], "vs", p[2])
+    ) +
+    theme_minimal()
+})
+wrap_plots(plots)
+
+# Distribution plot
+ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Distribution of Predicted Concentrations by Model Fit",
+       x = "Predicted Concentration",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+# Pairwise Plot of SCALiR fixed, interval, and combined
+df_all %>%
+        select("cotinine_combined", "cotinine_fixed", "cotinine_interval", "cotinine_og") %>%
+        ggpairs(upper = list(continuous = wrap("cor", size = 4)),
+                lower = list(continuous = wrap("points", alpha = 0.6)),
+                diag = list(continuous = "densityDiag"))
+
+# Convert data to long-format
+hc_long <- df_all %>%
+            select("sample_id", "cotinine_combined", "cotinine_fixed", "cotinine_interval", "cotinine_og") %>%
+            pivot_longer(
+                    cols = starts_with("cotinine_"),
+                    names_to = "fit",
+                    values_to = "pred_conc") %>%
+            mutate(fit = str_remove(fit, "cotinine_"))
+
+# Create pairwise combinations of fits
+fit_pairs <- combn(unique(hc_long$fit), 2, simplify=FALSE)
+
+# Create scatterplots for each pair
+plots <- map(fit_pairs, function(p) {
+  x_col <- paste0("cotinine_", p[1])
+  y_col <- paste0("cotinine_", p[2])
+
+  df_all %>%
+    ggplot(aes(x = .data[[x_col]], y = .data[[y_col]])) +
+    geom_point(alpha = 0.6) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      x = paste(p[1], "fit"),
+      y = paste(p[2], "fit"),
+      title = paste(p[1], "vs", p[2])
+    ) +
+    theme_minimal()
+})
+wrap_plots(plots)
+
+# Distribution plot
+ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Distribution of Predicted Concentrations by Model Fit",
+       x = "Predicted Concentration",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+# Pairwise Plot of SCALiR fixed, interval, and combined
+df_all %>%
+        select("logNMR_combined", "logNMR_fixed", "logNMR_interval", "logNMR_og") %>%
+        ggpairs(upper = list(continuous = wrap("cor", size = 4)),
+                lower = list(continuous = wrap("points", alpha = 0.6)),
+                diag = list(continuous = "densityDiag"))
+
+# Convert data to long-format
+hc_long <- df_all %>%
+            select("sample_id", "logNMR_combined", "logNMR_fixed", "logNMR_interval", "logNMR_og") %>%
+            pivot_longer(
+                    cols = starts_with("logNMR_"),
+                    names_to = "fit",
+                    values_to = "pred_conc") %>%
+            mutate(fit = str_remove(fit, "logNMR_"))
+
+# Create pairwise combinations of fits
+fit_pairs <- combn(unique(hc_long$fit), 2, simplify=FALSE)
+
+# Create scatterplots for each pair
+plots <- map(fit_pairs, function(p) {
+  x_col <- paste0("logNMR_", p[1])
+  y_col <- paste0("logNMR_", p[2])
+
+  df_all %>%
+    ggplot(aes(x = .data[[x_col]], y = .data[[y_col]])) +
+    geom_point(alpha = 0.6) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      x = paste(p[1], "fit"),
+      y = paste(p[2], "fit"),
+      title = paste(p[1], "vs", p[2])
+    ) +
+    theme_minimal()
+})
+wrap_plots(plots)
+
+# Distribution plot
+ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Distribution of Predicted Concentrations by Model Fit",
+       x = "Predicted Concentration",
+       y = "Density") +
+  theme_minimal()
 
 ```
