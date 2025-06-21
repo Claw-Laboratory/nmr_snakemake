@@ -32,9 +32,9 @@ wrangle_results <- function(df, id_col, nmr_col){
 # Use function on OG results
 og_results <- wrangle_results(og_results, 'idNo', 'logNMR')
 # Create a list of the SCALiR results
-scalir_results <- list(scalir_fixed, scalir_interval, scalir_wide)
+scalir_results <- list(scalir_fixed, scalir_interval, combined_results)
 # Set the names for the dataframes in the list
-names(scalir_results) <- c("scalir_fixed", "scalir_interval", "scalir_wide")
+names(scalir_results) <- c("scalir_fixed", "scalir_interval", "scalir_combined")
 # Loop over the dataframes in the list with the wrangle_results function
 scalir_results <- lapply(scalir_results, wrangle_results, id_col = 'sample_id', nmr_col = 'logNMR')
 # Move the items from the list back to the global environment
@@ -48,7 +48,7 @@ valid_samples <- list(
         original = og_results$idNo,
         scalir_fixed = scalir_fixed$sample_id,
         scalir_interval = scalir_interval$sample_id,
-        scalir_wide = scalir_wide$sample_id
+        scalir_combined = scalir_combined$sample_id
 )
 ```
 Make Venn diagrams of the valid samples
@@ -82,22 +82,10 @@ ggvenn(valid_samples[c(1,4)],
 
 Evaluate the set differences:
 ```{r}
-# Unique SCALiR fixed
-fixed_unique <- setdiff(scalir_fixed$sample_id, scalir_interval$sample_id)
-scalir_fixed[scalir_fixed$sample_id %in% fixed_unique,]
-
-# Unique SCALiR wide
-wide_unique <- setdiff(scalir_wide$sample_id, scalir_interval$sample_id)
-scalir_wide[scalir_wide$sample_id %in% wide_unique,]
-
-# Unique interval
-interval_unique <- setdiff(scalir_interval$sample_id, og_results$idNo)
-interval_unique_df <- scalir_interval[scalir_interval$sample_id %in% interval_unique,]
-hist(interval_unique_df$logNMR)
-
 # Unique original
-og_unique <- setdiff(og_results$idNo, c(scalir_interval$sample_id, scalir_wide$sample_id))
+og_unique <- setdiff(og_results$idNo, c(scalir_interval$sample_id, scalir_combined$sample_id))
 og_unique_df <- og_results[og_results$idNo %in% og_unique,]
+og_unique_df
 hist(og_unique_df$logNMR)
 
 ```
@@ -112,7 +100,7 @@ library(patchwork)
 # join all the scalir datasets into one wide dataframe
 df_scalir <- scalir_fixed %>%
         left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
-        left_join(combined_results, by = "sample_id") %>%
+        left_join(scalir_combined, by = "sample_id") %>%
         mutate(sample_id = as.character(sample_id)) %>%
         rename("3-hydroxycotinine_combined" = "3-hydroxycotinine")
 
@@ -166,7 +154,7 @@ ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
 # join all the scalir datasets into one wide dataframe
 df_scalir <- scalir_fixed %>%
         left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
-        left_join(combined_results, by = "sample_id") %>%
+        left_join(scalir_combined, by = "sample_id") %>%
         mutate(sample_id = as.character(sample_id)) %>%
         rename("cotinine_combined" = "cotinine")
 
@@ -220,7 +208,7 @@ ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
 # join all the scalir datasets into one wide dataframe
 df_scalir <- scalir_fixed %>%
         left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
-        left_join(combined_results, by = "sample_id") %>%
+        left_join(scalir_combined, by = "sample_id") %>%
         mutate(sample_id = as.character(sample_id)) %>%
         rename("logNMR_combined" = "logNMR")
 
@@ -280,7 +268,7 @@ og_subset <- og_results %>% select(idNo, COTconc, tHCconc, logNMR) %>%
 # join all the scalir datasets into one wide dataframe
 df_scalir <- scalir_fixed %>%
         left_join(scalir_interval, by = "sample_id", suffix = c("_fixed", "_interval")) %>%
-        left_join(combined_results, by = "sample_id") %>%
+        left_join(scalir_combined, by = "sample_id") %>%
         mutate(sample_id = as.character(sample_id))
 
 # join all the scalir datasets & the original dataset into one wide dataframe
@@ -428,4 +416,20 @@ ggplot(hc_long, aes(x = pred_conc, fill = fit, color = fit)) +
        y = "Density") +
   theme_minimal()
 
+```
+
+```{r}
+combined_detailed <- fread("results/combined/valid_filtered_samples.csv")
+glimpse(combined_detailed)
+combined_detailed %>%
+        filter(peak_label == "3-hydroxycotinine") %>%
+        group_by(fit, level) %>%
+        summarise(n=n()) %>%
+        arrange(level)
+
+combined_detailed %>%
+        filter(peak_label == "cotinine") %>%
+        group_by(fit, level) %>%
+        summarise(n=n()) %>%
+        arrange(level)
 ```
