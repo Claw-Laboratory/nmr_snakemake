@@ -432,4 +432,11 @@ combined_detailed %>%
         group_by(fit, level) %>%
         summarise(n=n()) %>%
         arrange(level)
+
+interval_detailed <- fread("results/interval/valid_filtered_samples.csv")
+interval_filtered <- interval_detailed %>%
+        filter(peak_label %in% c("3-hydroxycotinine", "cotinine")) %>%
+        filter(average_smape > 20) %>%
+        select(-ms_file, -accuracy_check)
+fwrite(interval_filtered, file = "interval_fit_accuracy_20-25.csv")
 ```
