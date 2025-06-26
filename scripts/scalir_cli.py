@@ -3,25 +3,74 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-
 from ms_conc import calibration_curves as cc
 from ms_conc import ConcentrationEstimator as CE
-
-def heav(x):
-    return 1 if x > 0.1 else 2
-
 import sys
 import datetime
 
 SCALIR_VERSION = "1.0.0"
 
+def heav(x):
+    """
+    Evaluates the heaviness function based on the input value.
+
+    The function determines the "heaviness" of the input `x`.
+    It returns 1 if the value of `x` is greater than 0.1. Otherwise,
+    it returns 2.
+
+    :param x: Input value to evaluate.
+    :type x: float
+    :return: 1 if `x` > 0.1, otherwise 2.
+    :rtype: int
+    """
+    return 1 if x > 0.1 else 2
+
 def main():
+    """
+    Executes the SCALiR CLI tool to estimate metabolite concentrations based on provided
+    standards and peaklist data. This function parses input arguments, processes and validates
+    files, performs concentration estimation using appropriate regression methods, and outputs the
+    results. Optional plotting is available for log-log standard curves if specified.
+
+    :argument:
+        --standards: str
+            Path to the standards concentration file (.csv or .xlsx). This file contains
+            known concentration data for metabolites.
+        --peaklist: str
+            Path to the peaklist data file (.csv or .xlsx). This file provides intensity
+            or response data for detected metabolites.
+        --program: Optional[str]
+            Program used to generate the peaklist data. Choices are 'Mint' or 'Maven'.
+            Required in non-internal mode if data format is specific to a certain program.
+        --mint-table_type: Optional[str]
+            If the program is 'Mint', specifies the table type. Choices are 'full results'
+            or 'dense peak_max'.
+        --fit-mode: str
+            Type of fit mode for regression analysis. Choices are 'fixed', 'interval', or
+            'wide'. Default is 'interval'.
+        --fit-interval: List[float]
+            A numeric range [LOWER, UPPER] defining the slope interval bounds for interval
+            fitting. Used when `--fit-mode` is 'interval'. Default is [0.85, 1.15].
+        --output-prefix: str
+            Prefix for the names of generated output files. Default is 'scalir_output'.
+        --plot-dir: Optional[str]
+            Directory for saving optional log-log plots of standard curves. These plots
+            are only generated if this argument is provided.
+
+    :raises:
+        ValueError:
+            Raised if unsupported file types are provided for the standards or peaklist
+            data or if an invalid program is specified in non-internal mode.
+
+    :return:
+        None
+    """
     parser = argparse.ArgumentParser(description="SCALiR CLI tool for metabolite concentration estimation")
     parser.add_argument('--standards', required=True, help='Path to standards concentration file (.csv or .xlsx)')
     parser.add_argument('--peaklist', required=True, help='Path to peaklist data file (.csv or .xlsx)')
     parser.add_argument('--program', choices=['Mint', 'Maven'], help='Program used to generate peaklist (required if not internal)')
     parser.add_argument('--mint-table_type', choices=['full results', 'dense peak_max'], help='Mint table type')
-    parser.add_argument('--fit-mode', choices=['fixed', 'interval', 'wide'], default='wide', help='Fit mode for regression')
+    parser.add_argument('--fit-mode', choices=['fixed', 'interval', 'wide'], default='interval', help='Fit mode for regression')
     parser.add_argument('--fit-interval', nargs=2, type=float, metavar=('LOWER', 'UPPER'), default=[0.85, 1.15], help='Slope interval bounds for interval fitting')
     parser.add_argument('--output-prefix', default='scalir_output', help='Prefix for output files')
     parser.add_argument('--plot-dir', help='Directory to save log-log plots for each compound')
