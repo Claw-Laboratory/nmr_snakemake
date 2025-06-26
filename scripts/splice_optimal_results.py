@@ -6,7 +6,38 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
          all_results_path, all_samples_results_path, valid_samples_results_path, valid_samples_filtered_results_path,
          failed_samples_results_path, control_samples_results_path
          ):
+    """
+    Processes and analyzes concentration and statistics data to generate multiple result files, 
+    including optimal concentrations, valid and failed sample results, and control sample summaries. 
+    This function implements a workflow that uses provided concentration files, QC concentration files, 
+    and QC statistics files, applies transformation and filtering, and outputs structured results 
+    based on the thresholds specified.
 
+    :param conc_file_paths: List of file paths containing predicted concentration data for analysis.
+    :type conc_file_paths: list of str
+    :param qc_conc_file: File path of the QC concentrations file in '.xlsx' format for QC levels information.
+    :type qc_conc_file: str
+    :param qc_stats_file_paths: List of file paths containing quality control statistics data.
+    :type qc_stats_file_paths: list of str
+    :param threshold: Specified percent error threshold value used for filtering results.
+    :type threshold: float
+    :param optimal_conc_file: File path to save the computed optimal concentrations as output.
+    :type optimal_conc_file: str
+    :param all_results_path: File path to save the aggregated results of all samples.
+    :type all_results_path: str
+    :param all_samples_results_path: File path to save results of all analyzed sample data only.
+    :type all_samples_results_path: str
+    :param valid_samples_results_path: File path to save results of valid, in-range samples only.
+    :type valid_samples_results_path: str
+    :param valid_samples_filtered_results_path: File path to save filtered results of valid samples.
+    :type valid_samples_filtered_results_path: str
+    :param failed_samples_results_path: File path where samples that fail validation will be saved.
+    :type failed_samples_results_path: str
+    :param control_samples_results_path: File path where control sample summary data will be saved.
+    :type control_samples_results_path: str
+    :return: Outputs are saved to respective file paths. Does not return a value.
+    :rtype: None
+    """
     # Create map of breaks from the nominal QC concentrations
     qc_df = pd.read_excel(qc_conc_file, skiprows=20, header=0)
     qc_df['Compound'] = qc_df['Compound'].str.lower()
