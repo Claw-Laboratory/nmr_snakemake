@@ -20,10 +20,10 @@ lcms_results: [
 qc_file: "data/QCSolutions_002_20220630.xlsx"
 
 # SCALIR PARAMETERS
-model_fit: ["fixed", "interval"] # options include: fixed, interval, and wide
+model_fit: ["fixed", "interval", "wide"] # options include: fixed, interval, and wide
 
 # FINAL FILTERING PARAMETERS
-percent_error_threshold: 30
+percent_error_threshold: 25
 
 # OUTPUT
 out_dir: "results"
