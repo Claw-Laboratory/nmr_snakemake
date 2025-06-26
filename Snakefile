@@ -39,30 +39,28 @@ rule all:
 
 rule create_scalir_peaklist_file:
   input:
-    lcms_results = cf_wizard.get_batch_file_path,
-    script = "scripts/make_peakslist_file.R"
+    lcms_results = cf_wizard.get_batch_file_path
   output:
     peaklist_file = cf_wizard.scalir_peaklist_file
   conda:
     "envs/r_env.yaml"
   shell:
     """
-    Rscript {input.script} \
+    Rscript scripts/make_peakslist_file.R \
       --infile {input.lcms_results} \
       --outfile {output.peaklist_file}
     """
 
 rule create_scalir_IS_concentration_file:
   input:
-    standards_stock_file = cf_wizard.standards,
-    script = "scripts/make_IS_concentration_file.R"
+    standards_stock_file = cf_wizard.standards
   output:
     standard_conc_file = cf_wizard.scalir_standards_file
   conda:
     "envs/r_env.yaml"
   shell:
     """
-    Rscript {input.script} \
+    Rscript scripts/make_IS_concentration_file.R \
       --infile {input.standards_stock_file} \
       --outfile {output.standard_conc_file}
     """
@@ -70,19 +68,20 @@ rule create_scalir_IS_concentration_file:
 rule run_scalir:
   input:
     scalir_peaklist_file = cf_wizard.scalir_peaklist_file,
-    scalir_standard_file = cf_wizard.scalir_standards_file,
-    script = "scripts/scalir_cli.py"
+    scalir_standard_file = cf_wizard.scalir_standards_file
   params:
     model_fit = cf_wizard.get_fit,
     out_prefix = cf_wizard.get_batch_results_prefix,
     plot_directory = cf_wizard.get_plot_dir
   output:
-    sample_conc_file = cf_wizard.scalir_concentration_file
+    sample_conc_file = cf_wizard.scalir_concentration_file,
+    sample_params_file = cf_wizard.scalir_parameters_file,
+    sample_run_file = cf_wizard.scalir_run_file
   conda:
     "envs/scalir_env.yaml"
   shell:
     """
-    python {input.script} \
+    python scripts/scalir_cli.py \
       --peaklist {input.scalir_peaklist_file} \
       --standards {input.scalir_standard_file} \
       --fit-mode {params.model_fit} \

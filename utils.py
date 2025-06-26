@@ -9,6 +9,7 @@ class ConfigWizard(object):
         self.batch_name_dict =  {os.path.splitext(os.path.basename(f))[0]: f for f in config["lcms_results"]}
         self.model_fit = config["model_fit"]
 
+    # CONFIG PARAMETERS
     @property
     def batch_files(self):
         return self.config["lcms_results"]
@@ -41,6 +42,7 @@ class ConfigWizard(object):
     def batch_results_path(self):
         return self.out_dir.joinpath("{fit}" ,"{batch_name}")
 
+    # CREATE SCALIR PEAKLIST FILE
     @property
     def scalir_input_dir(self):
         return self.batch_results_path.joinpath("scalir_input")
@@ -49,14 +51,25 @@ class ConfigWizard(object):
     def scalir_peaklist_file(self):
         return self.scalir_input_dir.joinpath("{batch_name}_peaklist.csv")
 
+    # CREATE SCALIR IS CONCENTRATION FILE
     @property
     def scalir_standards_file(self):
         return self.scalir_input_dir.joinpath("internal_standards_concentration_file.csv")
 
+    # RUN SCALIR
     @property
     def scalir_concentration_file(self):
         return self.batch_results_path.joinpath("{batch_name}_concentrations.csv")
 
+    @property
+    def scalir_parameters_file(self):
+        return self.batch_results_path.joinpath("{batch_name}_parameters.csv")
+
+    @property
+    def scalir_run_file(self):
+        return self.batch_results_path.joinpath("{batch_name}_run.csv")
+
+    # QUALITY ASSESSMENT
     @property
     def qc_samples_file(self):
         return self.batch_results_path.joinpath("quality_assessment/{batch_name}_qc_samples.csv")
@@ -81,24 +94,7 @@ class ConfigWizard(object):
     def qc_conc_plot_2(self):
         return self.batch_results_path.joinpath("quality_assessment/{batch_name}_qc_plot_2.jpg")
 
-    @property
-    def run_yaml_file(self):
-        return self.out_dir.joinpath("run_config.yaml")
-
-    @property
-    def conc_file_paths(self):
-        list_of_files = [str(self.scalir_concentration_file).format(batch_name=batch_name, fit=fit)
-                         for batch_name in self.batch_name
-                         for fit in self.fit]
-        return list_of_files
-
-    @property
-    def qc_stats_file_paths(self):
-        list_of_files = [str(self.qc_stats_file).format(batch_name=batch_name, fit=fit)
-                         for batch_name in self.batch_name
-                         for fit in self.fit]
-        return list_of_files
-
+    # COMBINE RESULTS
     @property
     def all_results_file(self):
         return self.out_dir.joinpath("{fit}", "all_results.csv")
@@ -126,6 +122,21 @@ class ConfigWizard(object):
     @property
     def valid_samples_nmr_file(self):
         return self.out_dir.joinpath("{fit}", "valid_filtered_samples_nmr.csv")
+
+    # COMBINE OPTIMAL RESULTS
+    @property
+    def conc_file_paths(self):
+        list_of_files = [str(self.scalir_concentration_file).format(batch_name=batch_name, fit=fit)
+                         for batch_name in self.batch_name
+                         for fit in self.fit]
+        return list_of_files
+
+    @property
+    def qc_stats_file_paths(self):
+        list_of_files = [str(self.qc_stats_file).format(batch_name=batch_name, fit=fit)
+                         for batch_name in self.batch_name
+                         for fit in self.fit]
+        return list_of_files
 
     @property
     def opt_all_results_file(self):
@@ -160,6 +171,16 @@ class ConfigWizard(object):
     def optimal_conc_file(self):
         return self.out_dir.joinpath("combined", "optimal_concentrations.csv")
 
+    # SAVE RUN CONFIG & PATHS
+    @property
+    def run_yaml_file(self):
+        return self.out_dir.joinpath("run_config.yaml")
+
+    # WILDCARD FUNCTIONS
+    def get_batch_name(self, wildcards):
+        batch_name = wildcards.batch_name
+        return batch_name
+
     def get_batch_file_path(self, wildcards):
         return self.batch_name_dict[wildcards.batch_name]
 
@@ -181,10 +202,6 @@ class ConfigWizard(object):
         batch_name = wildcards.batch_name
         fit = wildcards.fit
         return self.out_dir.joinpath(fit, batch_name, "quality_assessment")
-
-    def get_batch_name(self, wildcards):
-        batch_name = wildcards.batch_name
-        return batch_name
 
     def get_conc_file_paths(self, wildcards):
         paths = [str(self.scalir_concentration_file).format(batch_name = b, fit = wildcards.fit) for b in self.batch_name]
