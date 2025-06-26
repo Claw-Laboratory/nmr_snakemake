@@ -117,7 +117,7 @@ pretty_batch_stats <- batch_stats %>%
 
 fwrite(pretty_batch_stats, file = paste0(outfile_prefix, "_qc_statistics.csv"))
 
-# Plot Precision/Variance estimate
+# Plot precision estimate
 var_plot <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(x=((pred_conc)/(50/1000)), y=peak_label, fill=peak_label)) +
@@ -139,7 +139,7 @@ ggsave(paste0(outfile_prefix, "_precision_plot.jpg"),
        height=20,
        units="cm")
 
-# Plot Accuracy estimate
+# Plot accuracy estimate (symmetric mean absolute percent error)
 acc_plot <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(y=peak_label, x=smape, fill=peak_label)) +
@@ -149,7 +149,7 @@ acc_plot <- batch_df %>%
     theme_bw(base_size = 14) +
     labs(title = "Predicted Concentration Accuracy",
          y = "Metabolite",
-         x = "Symmetric Percent-Error") +
+         x = "Symmetric Mean Absolute Percent-Error") +
     theme(axis.title.x = element_text(margin = margin(b=15), vjust=-3),
           axis.title.y = element_text(margin = margin(l=15), vjust=6),
           legend.position = "none")
@@ -160,7 +160,8 @@ ggsave(paste0(outfile_prefix, "_accuracy_plot.jpg"),
        height=20,
        units="cm")
 
-# Plot of predicted concentrations with nominal concentrations
+# Plots of predicted concentrations with nominal concentrations
+# Faceted by QC level
 conc1 <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(x=((pred_conc)/(50/1000)), y=peak_label, fill=peak_label)) +
@@ -183,6 +184,7 @@ ggsave(paste0(outfile_prefix, "_qc_plot_1.jpg"),
        height=20,
        units="cm")
 
+# Faceted by metabolite
 conc2 <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(x=((pred_conc)/(50/1000)), y=qc_level, fill=peak_label)) +
