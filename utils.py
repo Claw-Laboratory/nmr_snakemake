@@ -67,7 +67,7 @@ class ConfigWizard(object):
 
     @property
     def scalir_run_file(self):
-        return self.batch_results_path.joinpath("{batch_name}_run.csv")
+        return self.batch_results_path.joinpath("{batch_name}_run.log")
 
     # QUALITY ASSESSMENT
     @property
