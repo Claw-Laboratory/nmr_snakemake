@@ -66,6 +66,7 @@ batch_df <- batch_df %>%
   left_join(qc_df, by=c("peak_label"="Compound", "qc_level")) %>%
   mutate(dif_from_nominal = abs(pred_conc - nominal_conc),
          percent_dif = (dif_from_nominal/nominal_conc)*100,
+         #symmetric mean absolute percent error
          smape = dif_from_nominal/((abs(pred_conc)+abs(nominal_conc))/2)*100)
 
 # Precision & Accuracy estimates
@@ -73,17 +74,15 @@ batch_stats <- batch_df %>%
   select(ms_file, peak_label, pred_conc, qc_level, in_range, dif_from_nominal,
          percent_dif, nominal_conc, smape) %>%
   group_by(peak_label, qc_level) %>%
-  summarize(in_range = mean(in_range),
+  summarise(in_range = mean(in_range),
             pred_conc_sd = sd(pred_conc),
             pred_conc_avg = mean(pred_conc),
-            lower_limit = pred_conc_avg - 2*pred_conc_sd,
-            upper_limit = pred_conc_avg + 2*pred_conc_sd,
             variance = pred_conc_sd/pred_conc_avg,
             percent_variance = round(variance*100, digits = 2),
             avg_dif = mean(dif_from_nominal),
             avg_percent_dif = round(mean(percent_dif), digits = 2),
             avg_smape = round(mean(smape), digits = 2),
-            accuracy_check = (lower_limit <= nominal_conc) & (nominal_conc <= upper_limit))
+            .groups = "keep")
 
 # Make tables pretty for output
 pretty_batch_df <- batch_df %>%
@@ -103,7 +102,7 @@ fwrite(pretty_batch_df, file = paste0(outfile_prefix, "_qc_samples.csv"))
 
 pretty_batch_stats <- batch_stats %>%
   select(peak_label, qc_level, in_range, pred_conc_avg, pred_conc_sd,
-         variance, percent_variance, avg_dif, avg_percent_dif, avg_smape, accuracy_check) %>%
+         variance, percent_variance, avg_dif, avg_percent_dif, avg_smape) %>%
   rename("Metabolite" = "peak_label",
          "QC Level" = "qc_level",
          "Predicted Concentration Average" = "pred_conc_avg",
@@ -112,8 +111,7 @@ pretty_batch_stats <- batch_stats %>%
          "Percent Variance" = "percent_variance",
          "Average Error" = "avg_dif",
          "Average Percent Error" = "avg_percent_dif",
-         "Average SMAPE" = "avg_smape",
-         "Accuracy Check" = "accuracy_check")
+         "Average SMAPE" = "avg_smape")
 
 fwrite(pretty_batch_stats, file = paste0(outfile_prefix, "_qc_statistics.csv"))
 

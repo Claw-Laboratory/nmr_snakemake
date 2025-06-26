@@ -52,25 +52,27 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
     qc_breaks["b2"] = (qc_breaks["Med"] * qc_breaks["High"])**0.5
     qc_breaks = qc_breaks[["Compound","b1","b2"]]
     qc_breaks = qc_breaks.rename(columns={"Compound": "peak_label"})
-    # Build best-model table
+    # Build best-model-fit QC table
     qc_stats_df = []
     for fp in qc_stats_file_paths:
         _, fit, batch, _, fname = fp.split(os.sep)
-        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE", "Accuracy Check"])
+        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE"])
         df["fit"] = fit
         df["batch"] = batch
         qc_stats_df.append(df)
 
     best_fit_df = pd.concat(qc_stats_df, ignore_index=True)
-#    best_fit_df = best_fit_df[best_fit_df["in_range"] != 0]
+    # Sort the combined qc dataframe by Average SMAPE (percent error)
     best_fit_df = best_fit_df.sort_values("Average SMAPE")
+    # Group the data by batch, metabolite, and qc level, then keep only the first occurence.
+    # This will create a dataframe of the lowest percent error/highest accuracy model fit for each batch x metabolite x level
     best_fit_df = (
         best_fit_df
         .drop_duplicates(subset=["batch", "Metabolite", "QC Level"], keep="first")
         .reset_index(drop=True)
     )
+    # Rename columns for clarity and ease of merging with the predicted concentration files
     best_fit_df.rename(columns={"fit": "best_fit", "QC Level": "level", "Metabolite": "peak_label"}, inplace=True)
-#    best_fit_df.to_csv("results/best_fit_models.csv", index=False, header=True, sep='\t')
 
     # Merge concentration files
     conc_df = []
@@ -83,10 +85,10 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
 
     conc_combined_df = pd.concat(conc_df, ignore_index=True)
 
-    # Join breaks into sample table
+    # Join qc_breaks for assigning concentration level categories to the combined dataframe
     conc_combined_df = conc_combined_df.merge(qc_breaks, how="left", on="peak_label")
 
-    # Bin each sample to low/med/high by metabolite
+    # Bin each sample to low/med/high concentration level categories by metabolite
     def assign_level(row):
         x, b1, b2 = row["pred_conc"], row["b1"], row["b2"]
         if x <= b1:
@@ -99,6 +101,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
     df_levels = (
         conc_combined_df[conc_combined_df["fit"] == "fixed"]
         .copy()
+        # Add a new column called level and perform the assign_level function to each row
         .assign(level=lambda d: d.apply(assign_level, axis=1))
         [["ms_file", "peak_label", "batch", "level"]]
     )
@@ -109,7 +112,7 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         how="left"
     )
 
-    # Join best-model table on metabolite x level x batch
+    # Join combined dataframe to the dataframe with best fit model lookup table by metabolite x level x batch
     best_fit_df = best_fit_df.drop(columns=["in_range"])
     conc_filtered_df = conc_combined_df.merge(
         best_fit_df,
@@ -117,18 +120,34 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
         how="left"
     )
 
-    # Select final concentrations
+    """
+    Create a column called score that will be used to filter the optimal concentrations.
+    The score will be the sum of two factors: 
+        1) if the sample concentration is in-range 
+        2) if the model fit of the predicted concentration matches the 'best fit' model
+    This ensures that a sample being in-range is prioritized first and then model fit.
+    Without this scoring, it was possible for samples to be dropped because the concentration
+    from the best fit model was not in-range for that particular sample. 
+    """
     conc_filtered_df["score"] = (
         conc_filtered_df["in_range"].astype(int) * 2
       + (conc_filtered_df["fit"] == conc_filtered_df["best_fit"]).astype(int)
     )
+    # Group the data by sample, metabolite, and batch, then sort by score and keep only the first occurence.
+    # This results in a dataframe of all the samples (including duplicates) with predicted concentrations from
+    # the best-fit model for that batch x sample x metabolite
     conc_filtered_df = (
         conc_filtered_df
           .sort_values("score", ascending=False)
           .groupby(["ms_file","peak_label","batch"], as_index=False)
           .first()
     )
+    # Drop the break-point, best_fit, and score columns
     conc_filtered_df = conc_filtered_df.drop(columns=["b1", "b2", "best_fit", "score"])
+    # While this unfiltered and unformated dataframe is exported by this script, it is
+    # currently marked as a temporary file in the Snakefile, so it will not appear in the
+    # output results. If you would like to see this file, just remove the temp flag in the
+    # snakefile.
     conc_filtered_df.to_csv(optimal_conc_file, index=False, header=True, sep='\t')
 
     ##### FILTER & FORMAT OUTPUT FILES #####
@@ -140,124 +159,73 @@ def main(conc_file_paths, qc_conc_file, qc_stats_file_paths, threshold, optimal_
     filtered_df['conc_ng_mL'] = filtered_df['pred_conc'] / (
                 50 / 1000)  # predicted concentration is in ng/50uL, we want to report ng/mL
     filtered_df['type'] = np.where(filtered_df['ms_file'].str.len() == 4, 'control', 'sample')
-    all_grouped = (filtered_df
-    .groupby(['ms_file', 'peak_label'], as_index=False)
-    .agg(
-        sample_id=('ms_file', 'first'),
-        peak_ratio=('value', 'mean'),
-        pred_conc=('pred_conc', 'mean'),
-        conc_ng_mL=('conc_ng_mL', 'mean'),
-        in_range=('in_range', 'mean'),
-        accuracy_check=('Accuracy Check', 'mean'),
-        type=('type', 'first'),
-        n=('ms_file', 'size'),
-        level=('level', lambda x: x.unique()),
-        fit=('fit', lambda x: x.unique()),
-        average_smape=('Average SMAPE', 'mean')
-        )
-    )
-    all_grouped.to_csv(all_results_path, index=False, header=True, sep='\t')
 
-    # Subset to df of samples only
+    # Define common aggregation dictionary for groupby operations
+    agg_dict = {
+        'ms_file': 'first',
+        'value': 'mean',
+        'pred_conc': 'mean',
+        'conc_ng_mL': 'mean',
+        'in_range': 'mean',
+        'type': 'first',
+        'level': lambda x: x.unique(),
+        'fit': lambda x: x.unique(),
+        'Average SMAPE': 'mean'
+    }
+
+    def group_and_save(df, output_path, extra_agg=None):
+        """Group DataFrame and save to CSV with optional extra aggregations"""
+        agg = agg_dict.copy()
+        if extra_agg:
+            agg.update(extra_agg)
+        grouped = df.groupby(['ms_file', 'peak_label'], as_index=False).agg(agg)
+
+        # Add count column
+        grouped['n'] = df.groupby(['ms_file', 'peak_label']).size().values
+
+        # Rename columns to match original output
+        grouped = grouped.rename(columns={
+            'ms_file': 'sample_id',
+            'value': 'peak_ratio',
+            'Average SMAPE': 'average_smape'
+        })
+
+        grouped.to_csv(output_path, index=False, header=True, sep='\t')
+        return grouped
+
+    # Process all samples
+    all_grouped = group_and_save(filtered_df, all_results_path)
+
+    # Process sample subsets
     samples_only = filtered_df.loc[filtered_df['type'] == 'sample']
-    samples_grouped = (samples_only
-    .groupby(['ms_file', 'peak_label'], as_index=False)
-    .agg(
-        sample_id=('ms_file', 'first'),
-        peak_ratio=('value', 'mean'),
-        pred_conc=('pred_conc', 'mean'),
-        conc_ng_mL=('conc_ng_mL', 'mean'),
-        in_range=('in_range', 'mean'),
-        accuracy_check=('Accuracy Check', 'mean'),
-        type=('type', 'first'),
-        n=('ms_file', 'size'),
-        level=('level', lambda x: x.unique()),
-        fit=('fit', lambda x: x.unique()),
-        average_smape=('Average SMAPE', 'mean')
-    )
-    )
-    samples_grouped.to_csv(all_samples_results_path, index=False, header=True, sep='\t')
+    samples_grouped = group_and_save(samples_only, all_samples_results_path)
 
-    # Subset of samples that are out of range
+    # Handle in-range and out-of-range samples
+    in_range = samples_only.loc[samples_only['in_range'] == 1]
     out_of_range = samples_only.loc[samples_only['in_range'] == 0]
 
-    # Subset of samples that are in-range
-    in_range = samples_only.loc[samples_only['in_range'] == 1]
-
-    # # Find the intersect of the two dataframes
-    # repeated_samples = pd.merge(in_range, out_of_range,
-    #                             how ='inner',
-    #                             on=['ms_file', 'peak_label'])
-    # repeated_samples.to_csv("successfully_repeated_samples.csv", index=False, header=True, sep='\t')
-
-    # Identify samples that are out of range and have not had a successful repeat
+    # Process failed samples
     failed_samples = out_of_range[~out_of_range[['ms_file', 'peak_label']].apply(tuple, axis=1).isin(
         in_range[['ms_file', 'peak_label']].apply(tuple, axis=1))]
-    failed_samples_grouped = (failed_samples
-    .groupby(['ms_file', 'peak_label'], as_index=False)
-    .agg(
-        sample_id=('ms_file', 'first'),
-        peak_ratio=('value', 'mean'),
-        pred_conc=('pred_conc', 'mean'),
-        conc_ng_mL=('conc_ng_mL', 'mean'),
-        in_range=('in_range', 'mean'),
-        accuracy_check=('Accuracy Check', 'mean'),
-        type=('type', 'first'),
-        n=('ms_file', 'size'),
-        level=('level', lambda x: x.unique()),
-        fit=('fit', lambda x: x.unique()),
-        average_smape=('Average SMAPE', 'mean')
-    )
-    )
-    failed_samples_grouped.to_csv(failed_samples_results_path, index=False, header=True, sep='\t')
+    failed_samples_grouped = group_and_save(failed_samples, failed_samples_results_path)
 
-    # If there are multiple in_range samples, report the mean value and pred_conc
-    in_range_samples_grouped = (in_range
-    .groupby(['ms_file', 'peak_label'], as_index=False)
-    .agg(
-        sample_id=('ms_file', 'first'),
-        peak_ratio=('value', 'mean'),
-        pred_conc=('pred_conc', 'mean'),
-        conc_ng_mL=('conc_ng_mL', 'mean'),
-        in_range=('in_range', 'mean'),
-        accuracy_check=('Accuracy Check', 'mean'),
-        type=('type', 'first'),
-        n=('ms_file', 'size'),
-        level=('level', lambda x: x.unique()),
-        fit=('fit', lambda x: x.unique()),
-        average_smape=('Average SMAPE', 'mean')
-        )
-    )
-    in_range_samples_grouped.to_csv(valid_samples_results_path, index=False, header=True, sep='\t')
+    # Process in-range samples
+    in_range_samples_grouped = group_and_save(in_range, valid_samples_results_path)
 
-    # Filter in-range samples to those with an average SMAPE below the cutoff threshold
-    in_range_filtered_samples_grouped = in_range_samples_grouped.loc[in_range_samples_grouped['average_smape'] <= threshold].copy()
+    # Filter and save samples below threshold
+    in_range_filtered_samples_grouped = in_range_samples_grouped.loc[
+        in_range_samples_grouped['average_smape'] <= threshold].copy()
     in_range_filtered_samples_grouped.to_csv(valid_samples_filtered_results_path, index=False, header=True, sep='\t')
 
-    # Subset to df of controls only
+    # Process control samples
     controls_only = filtered_df.loc[filtered_df['type'] == 'control'].copy()
     pos_controls = ["2727", "3819", "3089", "4753", "5487"]
     controls_only['control_type'] = np.where(
         (controls_only['type'] == 'control') & (controls_only['ms_file'].isin(pos_controls)),
         'pos', 'neg')
-    controls_grouped = (controls_only
-    .groupby(['ms_file', 'peak_label'], as_index=False)
-    .agg(
-        sample_id=('ms_file', 'first'),
-        peak_ratio=('value', 'mean'),
-        pred_conc=('pred_conc', 'mean'),
-        conc_ng_mL=('conc_ng_mL', 'mean'),
-        in_range=('in_range', 'mean'),
-        accuracy_check=('Accuracy Check', 'mean'),
-        type=('type', 'first'),
-        control_type=('control_type', 'first'),
-        n=('ms_file', 'size'),
-        level=('level', lambda x: x.unique()),
-        fit=('fit', lambda x: x.unique()),
-        average_smape=('Average SMAPE', 'mean')
-    )
-    )
-    controls_grouped.to_csv(control_samples_results_path, index=False, header=True, sep='\t')
+    group_and_save(controls_only, control_samples_results_path,
+                   {'control_type': 'first'})
+
 
 if __name__ == '__main__':
     main(snakemake.input["conc_files"],

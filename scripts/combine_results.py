@@ -51,7 +51,7 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
     qc_stats_df = []
     for fp in qc_stats_file_paths:
         _, fit, batch, _, fname = fp.split(os.sep)
-        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE", "Accuracy Check"])
+        df = pd.read_csv(fp, usecols=["Metabolite", "QC Level", "in_range", "Average SMAPE"])
         df["batch"] = batch
         qc_stats_df.append(df)
 
@@ -109,7 +109,6 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
         'pred_conc': 'mean',
         'conc_ng_mL': 'mean',
         'in_range': 'mean',
-        'Accuracy Check': 'mean',
         'type': 'first',
         'level': 'first',
         'Average SMAPE': 'mean'
@@ -124,7 +123,6 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
             'pred_conc': 'mean',
             'conc_ng_mL': 'mean',
             'in_range': 'mean',
-            'Accuracy Check': 'mean',
             'type': 'first',
             'level': 'first',
             'Average SMAPE': 'mean'
@@ -143,7 +141,6 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
         grouped = grouped.rename(columns={
             'ms_file': 'sample_id',
             'value': 'peak_ratio',
-            'Accuracy Check': 'accuracy_check',
             'Average SMAPE': 'average_smape'
         })
 
