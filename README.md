@@ -245,7 +245,7 @@ All jobs done.
 ```
 
 ### Workflow Rule Graph
-
+![](figures/rulegraph.png)
 
 
 ## Input Data Format
