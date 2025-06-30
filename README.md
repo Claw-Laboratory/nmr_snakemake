@@ -27,7 +27,7 @@
 
 ## Overview
 
-**SCALiR** (Standard Curve Application for determining Linear Ranges) is an open-source, vendor-agnostic tool from the Lewis Research Group’s [ms-conc](https://github.com/LewisResearchGroup/ms-conc) package (see DOI: [10.1186/1471-2105-15-102](https://pmc.ncbi.nlm.nih.gov/articles/PMC10461962/)). Designed to eliminate the manual workload of metabolite quantification, SCALiR automatically fits standard curves from known concentration mixtures, computes the equation of best fit, and transforms LC–MS signal intensities into absolute concentrations. Key features include:
+**SCALiR** (Standard Curve Application for determining Linear Ranges) is an open-source tool from the Lewis Research Group’s [ms-conc](https://github.com/LewisResearchGroup/ms-conc) package (see DOI: [10.1186/1471-2105-15-102](https://pmc.ncbi.nlm.nih.gov/articles/PMC10461962/)). SCALiR automatically fits standard curves from known concentration mixtures, computes the equation of best fit, and transforms LC–MS signal intensities into absolute concentrations. Key features include:
 
 - **Rapid throughput**: processes over 75 compounds in under 10 seconds.
 - **High accuracy**: achieves R² = 0.99 against expected concentrations in a 77-metabolite mix.
@@ -102,13 +102,13 @@ This Snakemake config file is a YAML document where you define workflow paramete
 
 Key parameters:
 
-- `standards_stock_file`: Path to the stock solutions file (Excel) containing known standard concentrations for calibration. fileciteturn3file1
-- `lcms_results`: List of raw LCMS result files (Excel) to be processed. fileciteturn3file1
+- `standards_stock_file`: Path to the standards stock solutions file (Excel) containing known standard concentrations for calibration.
+- `lcms_results`: List of raw LCMS result files (Excel) to be processed.
 - `qc_file`: Path to the QC sample concentration file (Excel) used in the QC assessment step. fileciteturn3file1
 - `model_fit`: Regression mode for calibration curves. Options:
-  - `fixed`: simple linear fit
-  - `interval`: confidence interval bands
-  - `wide`: prediction interval bands fileciteturn3file1
+  - `fixed`: simple linear fit fixed to a slope of 1. This fit is optimal for when you trust the standards and samples were measured with minimal error.
+  - `interval`: the slope of the fit can vary based on a bounded interval (default 0.85-1.15). This fit is optimal for when you expect there is some noise in the measurement of your standards and samples.
+  - `wide`: no bounds on the slope of the fit. This fit is optimal when you trust the measurement of your standards and samples, even if there is noise/error.
 - `percent_error_threshold`: SMAPE threshold (Symmetric Mean Absolute Percentage Error) for retaining valid samples. SMAPE calculates the average, symmetric, relative error between observed and predicted concentrations. Commonly used thresholds are **20%** (stricter, higher accuracy but fewer samples) or **25%** (more lenient, more samples retained). fileciteturn3file1
 - `out_dir`: Base output directory where all SCALiR results and QC summaries will be written. fileciteturn3file1
 
@@ -252,7 +252,7 @@ All jobs done.
 
 ### Batch Results Files
 
-- **File naming**: any Excel file in `data/` containing the word `results` and a date (e.g., `NIC_MET_QUANT_RESULTS_YYYYMMDD.xlsx`).
+- **File naming**: an Excel file typically containing the word `results` and a date (e.g., `NIC_MET_QUANT_RESULTS_YYYYMMDD.xlsx`).
 - **Sheet**: first sheet of the workbook.
 - **Headers**: two header rows:
   1. **Analyte columns**: for each compound, a pair of “Method” and “Results” columns, plus corresponding “Qualifier” columns for quantifier and qualifier transitions.
@@ -264,7 +264,7 @@ All jobs done.
 
 ### QC Solutions File
 
-- **Filename**: one file matching `QCSolutions_*.xlsx` in `data/`.
+- **Filename**: one file matching `QCSolutions_*.xlsx`.
 - **Sheet**: first sheet.
 - **QC table**: begins at line 20 and includes columns:
   - `Compound`
@@ -287,7 +287,7 @@ All jobs done.
 
 ### Stock Solutions File
 
-- **Filename**: one file matching `STOCKSOLUTION_CONCENTRATIONS_*.xlsx` in `data/`.
+- **Filename**: one file matching `STOCKSOLUTION_CONCENTRATIONS_*.xlsx`.
 - **Sheet**: first sheet.
 - **Standards table**: data begins at the top of the sheet with columns including:
   - `Compound`
@@ -310,18 +310,18 @@ All jobs done.
 
 All files are written to the `out_dir` specified in `config.yaml`:
 
-| File                          | Description                                     |
-| ----------------------------- | ----------------------------------------------- |
-| `<prefix>_parameters.csv`     | SCALiR regression parameters                    |
-| `<prefix>_concentrations.csv` | Raw concentration predictions                   |
-| `optimal_conc.tsv`            | Optimal concentrations (pre-grouping)           |
-| `all_results.tsv`             | Aggregated results for all (samples + controls) |
-| `all_samples.tsv`             | Aggregated target samples                       |
-| `valid_samples.tsv`           | In-range samples                                |
-| `valid_samples_filtered.tsv`  | In-range, error-filtered samples                |
-| `failed_samples.tsv`          | Samples failing QC                              |
-| `control_samples.tsv`         | Control sample summaries                        |
-| `valid_samples_nmr.tsv`       | NMR and log(NMR) for valid samples              |
+| File                         | Description                                     |
+|------------------------------| ----------------------------------------------- |
+| `<batch>_parameters.csv`     | SCALiR regression parameters                    |
+| `<batch>_concentrations.csv` | Raw concentration predictions                   |
+| `optimal_conc.tsv`           | Optimal concentrations (pre-grouping)           |
+| `all_results.tsv`            | Aggregated results for all (samples + controls) |
+| `all_samples.tsv`            | Aggregated target samples                       |
+| `valid_samples.tsv`          | In-range samples                                |
+| `valid_samples_filtered.tsv` | In-range, error-filtered samples                |
+| `failed_samples.tsv`         | Samples failing QC                              |
+| `control_samples.tsv`        | Control sample summaries                        |
+| `valid_samples_nmr.tsv`      | NMR and log(NMR) for valid samples              |
 
 ## Citation
 
@@ -339,7 +339,6 @@ Below are common issues and suggested resolutions:
 
 - **Conda environment failures**: Ensure `conda` is on your `PATH` and strict channel priority is enabled (`conda config --set channel_priority strict`). Remove any partially created envs under `envs/` and rerun.
 - **Missing input files**: Verify that your `config/config.yaml` paths match the filenames in `data/` and that Excel sheets are named correctly.
-- **Permission errors**: Check write permissions on `results/` and the `conda-prefix` directory (default: `../.snakemake`).
 - **Unexpected rule graph**: Run `snakemake -n` to debug missing dependencies or misnamed wildcards.
 - **SCALiR errors**: Examine the logs under each `scalir_input/` folder for detailed error messages from the CLI.
 
