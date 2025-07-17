@@ -55,7 +55,10 @@ def main(list_of_batch_paths, qc_conc_file, qc_stats_file_paths, threshold, all_
         df["batch"] = batch
         qc_stats_df.append(df)
 
-    fit_df = pd.concat(qc_stats_df, ignore_index=True)
+    fit_df = (
+        pd.concat(qc_stats_df, ignore_index=True)
+        .drop_duplicates(subset=['Metabolite', 'QC Level', 'batch'])
+    )
     fit_df.rename(columns={"QC Level": "level", "Metabolite": "peak_label"}, inplace=True)
 
     # Merge concentration files
