@@ -19,7 +19,7 @@ parser$add_argument("--qc-file",
                     help="Path to the QC sample stock solutions file.")
 parser$add_argument("--batch-file",
                     required=TRUE,
-                    help="Path to the metabolomics results excel file.")
+                    help="Path to the SCALiR predicted concentrations file.")
 parser$add_argument("--batch-name",
                     required=TRUE,
                     help="Name of batch")
@@ -66,20 +66,23 @@ batch_df <- batch_df %>%
   left_join(qc_df, by=c("peak_label"="Compound", "qc_level")) %>%
   mutate(dif_from_nominal = abs(pred_conc - nominal_conc),
          percent_dif = (dif_from_nominal/nominal_conc)*100,
+         #symmetric mean absolute percent error
          smape = dif_from_nominal/((abs(pred_conc)+abs(nominal_conc))/2)*100)
 
 # Precision & Accuracy estimates
 batch_stats <- batch_df %>%
-  select(ms_file, peak_label, pred_conc, qc_level, dif_from_nominal,
+  select(ms_file, peak_label, pred_conc, qc_level, in_range, dif_from_nominal,
          percent_dif, nominal_conc, smape) %>%
   group_by(peak_label, qc_level) %>%
-  summarize(pred_conc_sd = sd(pred_conc),
+  summarise(in_range = mean(in_range),
+            pred_conc_sd = sd(pred_conc),
             pred_conc_avg = mean(pred_conc),
             variance = pred_conc_sd/pred_conc_avg,
             percent_variance = round(variance*100, digits = 2),
             avg_dif = mean(dif_from_nominal),
             avg_percent_dif = round(mean(percent_dif), digits = 2),
-            avg_smape = round(mean(smape), digits = 2))
+            avg_smape = round(mean(smape), digits = 2),
+            .groups = "keep")
 
 # Make tables pretty for output
 pretty_batch_df <- batch_df %>%
@@ -98,7 +101,7 @@ pretty_batch_df <- batch_df %>%
 fwrite(pretty_batch_df, file = paste0(outfile_prefix, "_qc_samples.csv"))
 
 pretty_batch_stats <- batch_stats %>%
-  select(peak_label, qc_level, pred_conc_avg, pred_conc_sd,
+  select(peak_label, qc_level, in_range, pred_conc_avg, pred_conc_sd,
          variance, percent_variance, avg_dif, avg_percent_dif, avg_smape) %>%
   rename("Metabolite" = "peak_label",
          "QC Level" = "qc_level",
@@ -112,7 +115,7 @@ pretty_batch_stats <- batch_stats %>%
 
 fwrite(pretty_batch_stats, file = paste0(outfile_prefix, "_qc_statistics.csv"))
 
-# Plot Precision/Variance estimate
+# Plot precision estimate
 var_plot <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(x=((pred_conc)/(50/1000)), y=peak_label, fill=peak_label)) +
@@ -134,7 +137,7 @@ ggsave(paste0(outfile_prefix, "_precision_plot.jpg"),
        height=20,
        units="cm")
 
-# Plot Accuracy estimate
+# Plot accuracy estimate (symmetric mean absolute percent error)
 acc_plot <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(y=peak_label, x=smape, fill=peak_label)) +
@@ -144,7 +147,7 @@ acc_plot <- batch_df %>%
     theme_bw(base_size = 14) +
     labs(title = "Predicted Concentration Accuracy",
          y = "Metabolite",
-         x = "Symmetric Percent-Error") +
+         x = "Symmetric Mean Absolute Percent-Error") +
     theme(axis.title.x = element_text(margin = margin(b=15), vjust=-3),
           axis.title.y = element_text(margin = margin(l=15), vjust=6),
           legend.position = "none")
@@ -155,7 +158,8 @@ ggsave(paste0(outfile_prefix, "_accuracy_plot.jpg"),
        height=20,
        units="cm")
 
-# Plot of predicted concentrations with nominal concentrations
+# Plots of predicted concentrations with nominal concentrations
+# Faceted by QC level
 conc1 <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(x=((pred_conc)/(50/1000)), y=peak_label, fill=peak_label)) +
@@ -178,6 +182,7 @@ ggsave(paste0(outfile_prefix, "_qc_plot_1.jpg"),
        height=20,
        units="cm")
 
+# Faceted by metabolite
 conc2 <- batch_df %>%
   mutate(qc_level = factor(qc_level, levels = c("Low", "Med", "High"))) %>%
   ggplot(aes(x=((pred_conc)/(50/1000)), y=qc_level, fill=peak_label)) +
