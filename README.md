@@ -104,13 +104,13 @@ Key parameters:
 
 - `standards_stock_file`: Path to the standards stock solutions file (Excel) containing known standard concentrations for calibration.
 - `lcms_results`: List of raw LCMS result files (Excel) to be processed.
-- `qc_file`: Path to the QC sample concentration file (Excel) used in the QC assessment step. fileciteturn3file1
+- `qc_file`: Path to the QC sample concentration file (Excel) used in the QC assessment step. 
 - `model_fit`: Regression mode for calibration curves. Options:
   - `fixed`: simple linear fit fixed to a slope of 1. This fit is optimal for when you trust the standards and samples were measured with minimal error.
   - `interval`: the slope of the fit can vary based on a bounded interval (default 0.85-1.15). This fit is optimal for when you expect there is some noise in the measurement of your standards and samples.
   - `wide`: no bounds on the slope of the fit. This fit is optimal when you trust the measurement of your standards and samples, even if there is noise/error.
-- `percent_error_threshold`: SMAPE threshold (Symmetric Mean Absolute Percentage Error) for retaining valid samples. SMAPE calculates the average, symmetric, relative error between observed and predicted concentrations. Commonly used thresholds are **20%** (stricter, higher accuracy but fewer samples) or **25%** (more lenient, more samples retained). fileciteturn3file1
-- `out_dir`: Base output directory where all SCALiR results and QC summaries will be written. fileciteturn3file1
+- `percent_error_threshold`: SMAPE threshold (Symmetric Mean Absolute Percentage Error) for retaining valid samples. SMAPE calculates the average, symmetric, relative error between observed and predicted concentrations. Commonly used thresholds are **20%** (stricter, higher accuracy but fewer samples) or **25%** (more lenient, more samples retained). 
+- `out_dir`: Base output directory where all SCALiR results and QC summaries will be written. 
 
 ### Default Profile (`profiles/default/config.v8+.yaml`)
 
